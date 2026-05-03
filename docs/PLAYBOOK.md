@@ -314,3 +314,33 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: Django application behavior
+
+## 2026-05-03 14:43 - Fixed Linting issues and file is clean
+
+- Commit: 1b8709d
+- Author: makanika
+- Date: 2026-05-03T14:43:25+03:00
+- Delta: +49 / -16
+- Chapter Tags: Django, Application Logic, Backend API, Fix
+- Changed Files:
+  - M	app/app/calc.py
+  - M	app/app/tests.py
+  - M	app/core/admin.py
+  - M	app/core/management/commands/wait_db.py
+  - M	app/core/models.py
+  - M	app/core/tests/tests_commands.py
+  - M	docs/PLAYBOOK.md
+- Teaching Focus:
+  - Application evolution: Django code changes should be traced to behavior, tests, and API intent.
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+  - Failure-driven development: each fix should preserve the root cause as a reusable lesson.
+- Teaching Narrative:
+  - Story: This commit advances Django application behavior through a moderate and visible delta and centers on 'Fixed Linting issues and file is clean'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: Application evolution: Django code changes should be traced to behavior, tests, and API intent.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
