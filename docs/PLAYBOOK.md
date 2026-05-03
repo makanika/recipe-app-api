@@ -186,3 +186,26 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: Developer education and documentation
+
+## 2026-05-03 10:21 - added_postgresql_dependency
+
+- Commit: 2eb69ed
+- Author: makanika
+- Date: 2026-05-03T10:21:40+03:00
+- Delta: +39 / -0
+- Chapter Tags: Documentation, Teaching
+- Changed Files:
+  - M	docs/PLAYBOOK.md
+- Teaching Focus:
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+  - Incremental delivery: each addition should map to a clear capability gain.
+- Teaching Narrative:
+  - Story: This commit advances Developer education and documentation through a moderate and visible delta and centers on 'added_postgresql_dependency'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: Documentation is architecture: clear explanations reduce onboarding and debugging time.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
