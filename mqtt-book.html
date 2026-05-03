@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MQTT to PostgreSQL — Full Introduction | code::core</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:     #0D2340;
+      --blue-800: #14305A;
+      --blue-700: #1E4D8C;
+      --blue-500: #3970B8;
+      --blue-300: #7AAAD6;
+      --blue-50:  #EAF0FA;
+      --gold:     #B8922A;
+      --ivory:    #F9F6EF;
+      --ink:      #1C1A16;
+      --ink-mid:  #3D3A32;
+      --ink-soft: #6B6760;
+      --rule:     #D5CFC3;
+      --parch:    #EDE8DC;
+      --green:    #2A6B43;
+      --green-bg: #EAF3EE;
+      --amber:    #9A5B0A;
+      --amber-bg: #FDF3E3;
+      --red:      #8C2020;
+      --red-bg:   #FAEAEA;
+      --info-bg:  #EAF0FA;
+      --r:  10px;
+      --rs: 6px;
+      --rl: 16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.85;
+    }
+    ::selection { background: var(--navy); color: var(--ivory); }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--ivory); }
+    ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    .wrapper { display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ────────────────────────────────────────── */
+    .sidebar {
+      width: 280px; min-width: 280px;
+      background: var(--navy);
+      position: sticky; top: 0;
+      height: 100vh; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .sidebar::-webkit-scrollbar-track { background: var(--navy); }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--blue-700); border-radius: 3px; }
+    .sidebar-brand {
+      padding: 2rem 1.75rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .brand-wordmark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: .08em; color: var(--ivory);
+      margin-bottom: .3rem;
+    }
+    .brand-wordmark span { color: var(--gold); }
+    .brand-sub {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--blue-300);
+    }
+    .nav-group { padding: 1.2rem 1.75rem .5rem; }
+    .nav-group-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--blue-300); opacity: .75;
+      margin-bottom: .65rem;
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: .6rem;
+      text-decoration: none;
+      color: rgba(255,255,255,.65);
+      font-size: 13px; font-weight: 400;
+      padding: .45rem .6rem;
+      border-radius: var(--rs);
+      margin-bottom: 2px;
+      transition: all .15s ease;
+    }
+    .nav-link:hover { background: rgba(255,255,255,.08); color: var(--ivory); }
+    .nav-link.active { background: var(--gold); color: var(--navy); font-weight: 600; }
+    .nav-num {
+      width: 18px; min-width: 18px; height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.6);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 700;
+      display: grid; place-items: center;
+    }
+    .nav-link.active .nav-num { background: rgba(13,35,64,.2); color: var(--navy); }
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid rgba(255,255,255,.1);
+      padding: 1.1rem 1.75rem;
+      font-size: 11px;
+      color: rgba(255,255,255,.35);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── MAIN ───────────────────────────────────────────── */
+    .main {
+      flex: 1; min-width: 0;
+      padding: 3.5rem 5rem 6rem;
+      max-width: 940px;
+    }
+
+    /* ── HERO ───────────────────────────────────────────── */
+    .hero {
+      background: var(--navy);
+      border-radius: var(--rl);
+      padding: 3.5rem;
+      margin-bottom: 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: ""; position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(184,146,42,.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: ""; position: absolute;
+      bottom: -40px; left: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(30,77,140,.4) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1rem;
+      position: relative; z-index: 1;
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 52px; font-weight: 600;
+      line-height: 1.05; color: var(--ivory);
+      margin-bottom: 1.25rem;
+      position: relative; z-index: 1;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+    .hero-desc {
+      color: rgba(249,246,239,.75);
+      max-width: 600px; line-height: 1.85;
+      position: relative; z-index: 1;
+      margin-bottom: 2.25rem;
+    }
+    .hero-stats {
+      display: flex; gap: 0;
+      padding-top: 1.75rem;
+      border-top: 1px solid rgba(255,255,255,.12);
+      position: relative; z-index: 1;
+    }
+    .hero-stat {
+      flex: 1;
+      border-right: 1px solid rgba(255,255,255,.1);
+      padding-right: 1.5rem; margin-right: 1.5rem;
+    }
+    .hero-stat:last-child { border-right: none; margin-right: 0; }
+    .stat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px; font-weight: 600;
+      color: var(--gold); line-height: 1; margin-bottom: .2rem;
+    }
+    .stat-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: rgba(249,246,239,.6);
+    }
+
+    /* ── SECTIONS ───────────────────────────────────────── */
+    .section { margin-bottom: 2.5rem; }
+    .section-header { margin-bottom: 1.75rem; }
+    .section-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: var(--navy); color: var(--ivory);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      border-radius: 50%; margin-bottom: .65rem;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px; font-weight: 600;
+      color: var(--ink); line-height: 1.1;
+      margin-bottom: .35rem;
+    }
+    .section-subtitle {
+      font-size: 13px; font-weight: 400;
+      color: var(--ink-soft); letter-spacing: .02em;
+    }
+    hr.section-rule {
+      border: none;
+      border-top: 2px solid var(--rule);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── PROSE ──────────────────────────────────────────── */
+    .prose p { margin-bottom: 1rem; color: var(--ink-mid); }
+    .prose h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 600;
+      color: var(--blue-800); margin: 1.75rem 0 .5rem;
+    }
+    .prose h4 {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--navy); margin: 1.2rem 0 .4rem;
+    }
+    .prose strong { font-weight: 600; color: var(--ink); }
+
+    /* ── CODE ───────────────────────────────────────────── */
+    .pre-wrap { position: relative; margin: 1.35rem 0; }
+    .pre-wrap pre { margin: 0; }
+    pre {
+      background: var(--navy);
+      color: #C9D1D9;
+      padding: 1.5rem 1.75rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 400;
+      line-height: 1.75;
+      border-radius: var(--r);
+      box-shadow: 0 4px 24px rgba(13,35,64,.1);
+    }
+    .pre-lang {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--gold);
+      background: var(--navy);
+      border: 1px solid rgba(255,255,255,.12);
+      border-bottom: none;
+      padding: .2rem .6rem;
+      border-radius: var(--rs) var(--rs) 0 0;
+      margin-bottom: -1px;
+    }
+    code { font-family: 'JetBrains Mono', monospace; }
+    :not(pre) > code {
+      background: var(--parch);
+      border: 1px solid var(--rule);
+      color: var(--blue-700);
+      padding: .1em .4em;
+      border-radius: 4px;
+      font-size: 12.5px; font-weight: 500;
+    }
+    .copy-btn {
+      position: absolute; top: .65rem; right: .65rem;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--rs);
+      color: rgba(255,255,255,.5);
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 4px 10px; cursor: pointer;
+      opacity: 0; transition: opacity .15s, background .15s, color .15s;
+      user-select: none;
+    }
+    .pre-wrap:hover .copy-btn { opacity: 1; }
+    .copy-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+    .copy-btn.copied { background: var(--green); border-color: var(--green); color: #fff; opacity: 1; }
+
+    /* ── CALLOUTS ───────────────────────────────────────── */
+    .callout {
+      border-left: 4px solid;
+      padding: .9rem 1rem .9rem 1.1rem;
+      border-radius: var(--rs);
+      margin: 1.25rem 0;
+    }
+    .callout p { margin: 0; font-size: 14px; line-height: 1.75; }
+    .callout .callout-head {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: .3rem;
+    }
+    .callout.info  { border-color: var(--blue-500); background: var(--info-bg); }
+    .callout.info  .callout-head { color: var(--blue-700); }
+    .callout.ok    { border-color: var(--green); background: var(--green-bg); }
+    .callout.ok    .callout-head { color: var(--green); }
+    .callout.warn  { border-color: var(--amber); background: var(--amber-bg); }
+    .callout.warn  .callout-head { color: var(--amber); }
+    .callout.error { border-color: var(--red); background: var(--red-bg); }
+    .callout.error .callout-head { color: var(--red); }
+
+    /* ── TABLES ─────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--r);
+      border: 1px solid var(--rule);
+      margin: 1.35rem 0;
+    }
+    .table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .table-wrap th {
+      background: var(--parch); color: var(--navy);
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: .09em; font-weight: 700;
+      padding: .65rem .85rem; text-align: left;
+      border-bottom: 1px solid var(--rule);
+    }
+    .table-wrap td {
+      padding: .65rem .85rem;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink-mid); vertical-align: top;
+    }
+    .table-wrap tr:last-child td { border-bottom: none; }
+
+    /* ── DIAGRAM / FLOW ────────────────────────────────── */
+    .flow {
+      display: flex; align-items: center;
+      gap: 0; margin: 1.5rem 0;
+      flex-wrap: wrap; gap: .5rem;
+    }
+    .flow-box {
+      background: var(--navy); color: var(--ivory);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 600;
+      padding: .55rem .9rem;
+      border-radius: var(--rs);
+      text-align: center; white-space: nowrap;
+    }
+    .flow-arrow {
+      color: var(--gold); font-size: 18px;
+      font-weight: 700; line-height: 1;
+      padding: 0 .2rem;
+    }
+    .flow-label {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-soft); text-align: center;
+      margin-top: .2rem;
+    }
+    .flow-col { display: flex; flex-direction: column; align-items: center; }
+
+    /* ── GRID ──────────────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .9rem; margin: 1rem 0;
+    }
+    .tile {
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: 1rem 1.1rem;
+    }
+    .tile h4 {
+      font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--blue-700); margin-bottom: .4rem;
+    }
+    .tile p { font-size: 14px; color: var(--ink-mid); margin: 0; }
+
+    /* ── STEP LIST ─────────────────────────────────────── */
+    ol.steps {
+      list-style: none;
+      counter-reset: step-counter;
+      margin: 1rem 0;
+    }
+    ol.steps li {
+      counter-increment: step-counter;
+      display: flex; gap: .9rem;
+      margin-bottom: .85rem;
+      align-items: flex-start;
+    }
+    ol.steps li::before {
+      content: counter(step-counter);
+      min-width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--navy); color: var(--ivory);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 700;
+      display: grid; place-items: center;
+      flex-shrink: 0; margin-top: .15rem;
+    }
+    ol.steps li p { margin: 0; color: var(--ink-mid); font-size: 14.5px; }
+
+    /* ── RESPONSIVE ────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .main { padding: 2.5rem 2.5rem 4rem; }
+    }
+    @media (max-width: 860px) {
+      .wrapper { display: block; }
+      .sidebar { width: 100%; min-width: 0; height: auto; position: static; }
+      .main { padding: 1.75rem 1.25rem 3rem; max-width: 100%; }
+      .hero h1 { font-size: 38px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .flow { flex-direction: column; align-items: flex-start; }
+      .hero-stats { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ─── SIDEBAR ────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-wordmark">code<span>::</span>core</div>
+      <div class="brand-sub">MQTT to PostgreSQL</div>
+    </div>
+    <nav>
+      <div class="nav-group">
+        <div class="nav-group-label">Foundations</div>
+        <a class="nav-link" href="#ch1"><span class="nav-num">01</span>What is MQTT?</a>
+        <a class="nav-link" href="#ch2"><span class="nav-num">02</span>How MQTT Works</a>
+        <a class="nav-link" href="#ch3"><span class="nav-num">03</span>The Broker</a>
+        <a class="nav-link" href="#ch4"><span class="nav-num">04</span>Topics &amp; QoS</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">PostgreSQL Layer</div>
+        <a class="nav-link" href="#ch5"><span class="nav-num">05</span>Why Postgres?</a>
+        <a class="nav-link" href="#ch6"><span class="nav-num">06</span>Schema Design</a>
+        <a class="nav-link" href="#ch7"><span class="nav-num">07</span>Writing the Bridge</a>
+        <a class="nav-link" href="#ch8"><span class="nav-num">08</span>Docker Stack</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Worked Examples</div>
+        <a class="nav-link" href="#ch9"><span class="nav-num">09</span>Temperature Logger</a>
+        <a class="nav-link" href="#ch10"><span class="nav-num">10</span>Device Heartbeats</a>
+        <a class="nav-link" href="#ch11"><span class="nav-num">11</span>Command &amp; Control</a>
+        <a class="nav-link" href="#ch12"><span class="nav-num">12</span>Alert Engine</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Web &amp; Beyond</div>
+        <a class="nav-link" href="#ch13"><span class="nav-num">13</span>REST API Layer</a>
+        <a class="nav-link" href="#ch14"><span class="nav-num">14</span>Live Web Dashboard</a>
+        <a class="nav-link" href="#ch15"><span class="nav-num">15</span>Production Hardening</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">v1.0 · 15 chapters · code::core</div>
+  </aside>
+
+  <!-- ─── MAIN ───────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-eyebrow">Full Introduction</div>
+      <h1>MQTT to <em>PostgreSQL</em> — From Device to Dashboard</h1>
+      <p class="hero-desc">
+        A complete, practical guide to understanding MQTT deeply, building a production-grade bridge
+        to PostgreSQL, and serving that data on a live web page. Every concept is explained in plain
+        language, every example is fully worked and runnable.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="stat-val">15</div><div class="stat-label">Chapters</div></div>
+        <div class="hero-stat"><div class="stat-val">40+</div><div class="stat-label">Code Blocks</div></div>
+        <div class="hero-stat"><div class="stat-val">4</div><div class="stat-label">Full Projects</div></div>
+        <div class="hero-stat"><div class="stat-val">1</div><div class="stat-label">Full Stack</div></div>
+      </div>
+    </header>
+
+    <!-- ─── CHAPTER 1 ──────────────────────────────────── -->
+    <section class="section" id="ch1">
+      <div class="section-header">
+        <div class="section-num">01</div>
+        <h2 class="section-title">What is MQTT?</h2>
+        <p class="section-subtitle">Message Queuing Telemetry Transport — the language of machines</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          MQTT stands for <strong>Message Queuing Telemetry Transport</strong>. It is a lightweight, open
+          network protocol designed specifically for sending small pieces of data between many devices in
+          situations where bandwidth is tight, battery life matters, or network reliability cannot be
+          guaranteed. It was invented by Andy Stanford-Clark of IBM and Arlen Nipper of Arcom in 1999 to
+          monitor oil pipelines over satellite connections, where every byte and every dropped connection
+          cost real money.
+        </p>
+        <p>
+          Today MQTT is the default language of the Internet of Things. It runs on thermostats, generators,
+          water pumps, hotel room controllers, fire panels, solar inverters, and medical devices. It is what
+          your ESP32 and Raspberry Pi Pico W should speak as soon as they need to report anything to the
+          outside world.
+        </p>
+        <p>
+          The reason MQTT became dominant is not by accident. The entire protocol was built around a single
+          radical constraint: the device you are talking to might disconnect at any moment without warning,
+          and the network connecting it might be slow, expensive, and unreliable. When you design for the
+          worst case, everything easier becomes trivially simple. MQTT brings that discipline to every project
+          that uses it.
+        </p>
+
+        <h3>MQTT versus HTTP — Why the Difference Matters</h3>
+        <p>
+          Most developers first encounter data transfer through HTTP, the same protocol used by web browsers.
+          HTTP works on a <strong>request-response</strong> model: the client asks a question, the server
+          answers, and the connection closes. This is excellent for browsing a web page or calling a REST API.
+        </p>
+        <p>
+          But imagine a temperature sensor that needs to report its reading every five seconds. Using HTTP,
+          the device would need to open a TCP connection, send a header-heavy request, wait for the server
+          response, and close the connection — five hundred times per hour. The overhead of the protocol
+          massively outweighs the payload. On a battery-powered device this is a disaster. On a congested
+          network this is reckless.
+        </p>
+        <p>
+          MQTT flips the model. The device opens a <strong>single long-lived connection</strong> to a
+          central server called the <em>broker</em>, and that connection stays open. Sending a temperature
+          reading is then just a tiny publish message — as small as two bytes of overhead plus your payload.
+          The broker keeps track of every connected device, fans messages out to subscribers, and stores
+          state on behalf of devices that go offline.
+        </p>
+
+        <div class="callout info">
+          <div class="callout-head">Key fact</div>
+          <p>The minimum MQTT packet overhead is 2 bytes. The minimum HTTP request overhead is several hundred bytes. For a sensor sending small payloads thousands of times a day, this difference is enormous in battery life and bandwidth cost.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="tile">
+            <h4>MQTT is Ideal For</h4>
+            <p>Sensors, microcontrollers, mobile devices, poor networks, high publish frequency, many devices, event-driven telemetry.</p>
+          </div>
+          <div class="tile">
+            <h4>HTTP is Better For</h4>
+            <p>Human web browsing, stateless REST APIs, file transfers, one-time requests, situations where caching and CDN matter.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 2 ──────────────────────────────────── -->
+    <section class="section" id="ch2">
+      <div class="section-header">
+        <div class="section-num">02</div>
+        <h2 class="section-title">How MQTT Works</h2>
+        <p class="section-subtitle">Publish, Subscribe, and the three-actor model</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          MQTT is built around three actors: the <strong>publisher</strong>, the <strong>broker</strong>,
+          and the <strong>subscriber</strong>. Understanding the role of each one is the foundation of
+          every system you will ever build with this protocol.
+        </p>
+
+        <div class="flow">
+          <div class="flow-col">
+            <div class="flow-box">Publisher<br/>(ESP32 / Pico)</div>
+            <div class="flow-label">sends data</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-col">
+            <div class="flow-box">Broker<br/>(Mosquitto)</div>
+            <div class="flow-label">routes messages</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-col">
+            <div class="flow-box">Subscriber<br/>(Python Bridge)</div>
+            <div class="flow-label">receives &amp; stores</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-col">
+            <div class="flow-box">PostgreSQL<br/>(Database)</div>
+            <div class="flow-label">persists data</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-col">
+            <div class="flow-box">Web Page<br/>(Dashboard)</div>
+            <div class="flow-label">displays data</div>
+          </div>
+        </div>
+
+        <h3>The Publisher</h3>
+        <p>
+          A publisher is any client that sends a message to the broker. This is almost always a device,
+          a sensor, or a piece of software that knows something useful. The publisher does not know who
+          will receive its message. It does not care. It simply says: "I am sending a temperature of 22.4
+          degrees to the topic <code>building/floor2/room12/temperature</code>" and then goes back to
+          measuring. This decoupling is powerful because you can add subscribers without touching the
+          device firmware at all.
+        </p>
+
+        <h3>The Broker</h3>
+        <p>
+          The broker is the central server. It receives messages from publishers, inspects their topics,
+          and delivers them to every subscriber that has registered interest in that topic. It also manages
+          connections, handles authentication, persists retained messages, and enforces Quality of Service
+          guarantees. You will almost always use <strong>Mosquitto</strong> or <strong>EMQX</strong> as
+          your broker. In this book we use Mosquitto running in Docker.
+        </p>
+
+        <h3>The Subscriber</h3>
+        <p>
+          A subscriber is any client that has told the broker "I want to receive messages for this topic."
+          There can be zero, one, or a thousand subscribers for any given topic. In our system the most
+          important subscriber is the <strong>bridge service</strong> — a Python script that receives
+          every telemetry message and inserts it into PostgreSQL.
+        </p>
+
+        <h3>The Publish-Subscribe Pattern</h3>
+        <p>
+          The technical name for this pattern is <strong>pub/sub</strong>. The key property is
+          <em>decoupling</em>. Publishers and subscribers never know about each other directly. They are
+          connected only through topic names. This means you can change your storage backend, add a new
+          analytics subscriber, or replace your device firmware without breaking the rest of the system.
+          Every serious IoT architecture uses this pattern for exactly that reason.
+        </p>
+
+        <div class="callout ok">
+          <div class="callout-head">Design principle</div>
+          <p>In pub/sub architecture, your devices are free from knowing where their data goes. The broker owns routing. This is what makes your system extensible without firmware changes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 3 ──────────────────────────────────── -->
+    <section class="section" id="ch3">
+      <div class="section-header">
+        <div class="section-num">03</div>
+        <h2 class="section-title">The Broker — Mosquitto in Docker</h2>
+        <p class="section-subtitle">Installing, configuring, and running the message router</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          Mosquitto is the most widely deployed open-source MQTT broker in the world. It is small, fast,
+          and production-proven. We run it in Docker so the installation is identical on every machine and
+          every server, and so it integrates cleanly with Postgres, our API, and our bridge service in the
+          same Docker network.
+        </p>
+
+        <h3>Directory structure</h3>
+        <p>Create the following layout before you write any code. Keeping configuration separate from
+        application code makes maintenance clear.</p>
+        <div class="pre-lang">shell</div>
+        <div class="pre-wrap"><pre><code>project/
+├── docker-compose.yml
+├── mosquitto/
+│   ├── config/
+│   │   └── mosquitto.conf
+│   ├── data/
+│   └── log/
+├── bridge/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── bridge.py
+└── db/
+    └── init.sql</code></pre></div>
+
+        <h3>Mosquitto configuration file</h3>
+        <p>This is the minimal configuration for a development broker. It enables anonymous connections
+        on port 1883 and WebSocket connections on port 9001 so your web dashboard can connect directly.</p>
+        <div class="pre-lang">conf</div>
+        <div class="pre-wrap"><pre><code># mosquitto/config/mosquitto.conf
+
+# Standard MQTT port
+listener 1883
+protocol mqtt
+
+# WebSocket port (browsers use this)
+listener 9001
+protocol websockets
+
+# Allow unauthenticated connections in development
+allow_anonymous true
+
+# Persist messages so retained topics survive restarts
+persistence true
+persistence_location /mosquitto/data/
+
+# Log everything to stdout and file
+log_dest stdout
+log_dest file /mosquitto/log/mosquitto.log
+log_type all</code></pre></div>
+
+        <div class="callout warn">
+          <div class="callout-head">Production note</div>
+          <p>In production, set <code>allow_anonymous false</code> and create a password file with <code>mosquitto_passwd</code>. Never expose the broker directly to the internet without authentication and TLS.</p>
+        </div>
+
+        <h3>Docker Compose for the broker</h3>
+        <div class="pre-lang">yaml</div>
+        <div class="pre-wrap"><pre><code># docker-compose.yml (broker only for now)
+
+version: "3.9"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    ports:
+      - "1883:1883"   # MQTT
+      - "9001:9001"   # WebSocket
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped</code></pre></div>
+
+        <p>Start the broker with:</p>
+        <div class="pre-lang">shell</div>
+        <div class="pre-wrap"><pre><code>docker compose up -d mosquitto</code></pre></div>
+
+        <h3>Testing the broker from your terminal</h3>
+        <p>Install the Mosquitto command-line tools on your development machine to test immediately.
+        Open two terminals.</p>
+        <p><strong>Terminal 1 — subscribe to all topics:</strong></p>
+        <div class="pre-lang">shell</div>
+        <div class="pre-wrap"><pre><code>mosquitto_sub -h localhost -p 1883 -t "#" -v</code></pre></div>
+        <p><strong>Terminal 2 — publish a test message:</strong></p>
+        <div class="pre-lang">shell</div>
+        <div class="pre-wrap"><pre><code>mosquitto_pub -h localhost -p 1883 \
+  -t "building/floor1/room101/temperature" \
+  -m '{"value": 22.4, "unit": "celsius"}'</code></pre></div>
+        <p>You should immediately see the message appear in Terminal 1. If you do, your broker is working correctly.</p>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 4 ──────────────────────────────────── -->
+    <section class="section" id="ch4">
+      <div class="section-header">
+        <div class="section-num">04</div>
+        <h2 class="section-title">Topics and Quality of Service</h2>
+        <p class="section-subtitle">The addressing system and delivery guarantees</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <h3>Topics — the address of every message</h3>
+        <p>
+          A topic is a UTF-8 string that acts as the address and routing key for an MQTT message.
+          Topics are structured with forward slashes as separators, like a file path or a URL, but
+          they are entirely arbitrary — you define the naming convention for your system. Good topic
+          design is one of the most important architecture decisions you will make.
+        </p>
+
+        <h4>Recommended topic schema</h4>
+        <div class="pre-lang">text</div>
+        <div class="pre-wrap"><pre><code>{site}/{building}/{floor}/{room}/{device-type}/{metric}
+
+Examples:
+  nairobi/main/floor3/room310/temperature/celsius
+  daresalaam/onomo/floor1/room112/humidity/percent
+  kampala/hotel-a/basement/generator/fuel/liters
+  nairobi/main/roof/fire-panel/zone3/alarm</code></pre></div>
+
+        <p>
+          The most important rule is <strong>consistency</strong>. If every topic follows the same
+          depth and structure, you can use wildcards to subscribe to logical groupings and your bridge
+          code stays simple. If topics are inconsistent you will write special cases forever.
+        </p>
+
+        <h3>Wildcards</h3>
+        <p>MQTT defines two wildcard characters that subscribers can use to match multiple topics.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Wildcard</th><th>Name</th><th>Behaviour</th><th>Example subscription</th></tr></thead>
+            <tbody>
+              <tr><td><code>+</code></td><td>Single-level</td><td>Matches exactly one level</td><td><code>building/+/room101/temperature</code></td></tr>
+              <tr><td><code>#</code></td><td>Multi-level</td><td>Matches everything from here down</td><td><code>building/floor2/#</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Our bridge service subscribes to <code>#</code> — all topics — and records the full topic path
+          as a column in Postgres. This means adding new sensors requires zero changes to the bridge code.
+        </p>
+
+        <h3>Quality of Service (QoS)</h3>
+        <p>
+          QoS is the guarantee that MQTT makes about whether a message is delivered. There are three levels,
+          and choosing the wrong one causes either lost data or wasted processing. You must understand all
+          three to design reliable systems.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Level</th><th>Name</th><th>Guarantee</th><th>Use when</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>0</code></td>
+                <td>At most once</td>
+                <td>Fire and forget. Message may be lost.</td>
+                <td>High-frequency sensor data where occasional loss is acceptable.</td>
+              </tr>
+              <tr>
+                <td><code>1</code></td>
+                <td>At least once</td>
+                <td>Delivered at least once. May arrive twice.</td>
+                <td>Telemetry data where you need every reading but can handle duplicates.</td>
+              </tr>
+              <tr>
+                <td><code>2</code></td>
+                <td>Exactly once</td>
+                <td>Delivered exactly once. Highest overhead.</td>
+                <td>Commands, financial events, actions that must not be duplicated.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-head">Practical guidance</div>
+          <p>Use QoS 1 for telemetry going into Postgres. The bridge should make Postgres inserts idempotent so duplicates from QoS 1 retries do not create corrupted data. Use QoS 2 for control commands that switch relays or execute actions with side effects.</p>
+        </div>
+
+        <h3>Retained Messages</h3>
+        <p>
+          When a publisher sets the <code>retain</code> flag, the broker stores the <em>last message
+          on that topic</em> and delivers it immediately to any new subscriber. This is extraordinarily
+          useful for device state: if your dashboard connects to the broker an hour after the generator
+          reported its fuel level, it immediately receives the last known value rather than waiting for
+          the next publish.
+        </p>
+        <div class="pre-lang">shell</div>
+        <div class="pre-wrap"><pre><code># Publish with retain flag
+mosquitto_pub -h localhost -p 1883 \
+  -t "generator/fuel" \
+  -m '{"level_liters": 450, "capacity": 600}' \
+  --retain</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 5 ──────────────────────────────────── -->
+    <section class="section" id="ch5">
+      <div class="section-header">
+        <div class="section-num">05</div>
+        <h2 class="section-title">Why PostgreSQL?</h2>
+        <p class="section-subtitle">The right database for time-series telemetry and operational data</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          When MQTT messages arrive at the broker they exist in memory. The broker does not persist
+          your telemetry history — that is not its job. You need a proper database to store readings
+          durably, query them efficiently, build reports on them, and serve them to web dashboards.
+          PostgreSQL is the right choice for this and the reasons are worth understanding clearly.
+        </p>
+        <p>
+          MQTT produces <strong>time-series data</strong>: rows of observations with a timestamp,
+          a device identifier, a metric name, and a value. Every sensor you add simply adds more rows
+          to the same table structure. Postgres handles this naturally and scales far further than most
+          IoT deployments ever need. Pure time-series databases like InfluxDB exist and are worth
+          knowing about, but Postgres lets you join your telemetry data with your device registry,
+          your alert history, your user accounts, and your business logic in a single query language
+          you already know.
+        </p>
+
+        <div class="grid-2">
+          <div class="tile">
+            <h4>Strong Points for This Use Case</h4>
+            <p>ACID transactions, JSONB column type for flexible payloads, partial indexes for performance, pg_partman for time-based partitioning, and PostGIS for location data.</p>
+          </div>
+          <div class="tile">
+            <h4>What to Watch</h4>
+            <p>High-frequency inserts need proper indexing strategy. Partitioning by month prevents table bloat. Vacuuming and connection pooling are important at scale.</p>
+          </div>
+        </div>
+
+        <h3>JSONB — Your Bridge to Flexible Payloads</h3>
+        <p>
+          MQTT messages arrive as raw bytes. You will typically send JSON payloads because they are
+          human-readable and easy to extend without changing your schema. PostgreSQL's <code>JSONB</code>
+          column type stores JSON as a binary-indexed format that supports operators for querying inside
+          the document without parsing it in application code.
+        </p>
+        <p>
+          The best design pattern is a <strong>hybrid schema</strong>: keep your known, indexed columns
+          as proper SQL types (timestamp, device_id, topic) and put the full raw payload in a
+          <code>JSONB</code> column. This gives you efficient indexed queries on the common filters while
+          keeping the raw data fully accessible.
+        </p>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 6 ──────────────────────────────────── -->
+    <section class="section" id="ch6">
+      <div class="section-header">
+        <div class="section-num">06</div>
+        <h2 class="section-title">Schema Design</h2>
+        <p class="section-subtitle">Designing a Postgres schema that grows cleanly with your devices</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          Good schema design is the difference between a database that stays fast and queryable for years
+          and one that becomes a pain within months. This schema is battle-tested for IoT telemetry.
+        </p>
+
+        <h3>The devices table — your registry</h3>
+        <p>
+          Every device that publishes MQTT messages should have a record in the devices table. This lets
+          you join telemetry to metadata like location, hardware type, and install date without repeating
+          that information in every row.
+        </p>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>-- db/init.sql
+
+CREATE TABLE devices (
+    id          SERIAL PRIMARY KEY,
+    device_id   TEXT NOT NULL UNIQUE,
+    site        TEXT NOT NULL,
+    building    TEXT,
+    floor       TEXT,
+    room        TEXT,
+    device_type TEXT NOT NULL,
+    description TEXT,
+    installed   DATE,
+    is_active   BOOLEAN NOT NULL DEFAULT true,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Index for the most common lookup
+CREATE INDEX idx_devices_device_id ON devices (device_id);
+CREATE INDEX idx_devices_site      ON devices (site);</code></pre></div>
+
+        <h3>The telemetry table — your event log</h3>
+        <p>
+          Every MQTT message that arrives becomes one row in this table. Append-only, never update.
+          This preserves the complete history and allows accurate replay and audit.
+        </p>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>CREATE TABLE telemetry (
+    id          BIGSERIAL PRIMARY KEY,
+    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    device_id   TEXT NOT NULL,
+    topic       TEXT NOT NULL,
+    qos         SMALLINT NOT NULL DEFAULT 0,
+    payload     JSONB NOT NULL,
+    -- Extracted common fields for indexed queries
+    metric      TEXT,
+    value_num   DOUBLE PRECISION,
+    unit        TEXT
+);
+
+-- Performance indexes
+CREATE INDEX idx_telemetry_received_at ON telemetry (received_at DESC);
+CREATE INDEX idx_telemetry_device_id   ON telemetry (device_id);
+CREATE INDEX idx_telemetry_topic       ON telemetry (topic);
+CREATE INDEX idx_telemetry_metric      ON telemetry (metric);
+
+-- JSONB index for payload queries
+CREATE INDEX idx_telemetry_payload ON telemetry USING gin (payload);</code></pre></div>
+
+        <h3>The device_state table — last known values</h3>
+        <p>
+          The telemetry table tells you everything that happened. But to show a live dashboard you need
+          to know the <em>current</em> value for each device without scanning millions of rows. The
+          device_state table is an upsert target that stores only the latest reading per device and metric.
+        </p>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>CREATE TABLE device_state (
+    device_id   TEXT NOT NULL,
+    metric      TEXT NOT NULL,
+    value_num   DOUBLE PRECISION,
+    unit        TEXT,
+    payload     JSONB,
+    last_seen   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (device_id, metric)
+);
+
+CREATE INDEX idx_device_state_last_seen ON device_state (last_seen DESC);</code></pre></div>
+
+        <h3>The alerts table — event escalation log</h3>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>CREATE TABLE alerts (
+    id          BIGSERIAL PRIMARY KEY,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    device_id   TEXT NOT NULL,
+    topic       TEXT NOT NULL,
+    alert_type  TEXT NOT NULL,
+    severity    TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'critical')),
+    message     TEXT NOT NULL,
+    payload     JSONB,
+    resolved_at TIMESTAMPTZ,
+    resolved_by TEXT
+);
+
+CREATE INDEX idx_alerts_device_id  ON alerts (device_id);
+CREATE INDEX idx_alerts_created_at ON alerts (created_at DESC);
+CREATE INDEX idx_alerts_severity   ON alerts (severity)
+    WHERE resolved_at IS NULL;</code></pre></div>
+
+        <div class="callout ok">
+          <div class="callout-head">Schema rule</div>
+          <p>Never delete rows from telemetry or alerts. These are immutable event logs. Add a <code>resolved_at</code> column to alerts and a <code>superseded_by</code> column to state if you need logical deletion. Your future self and your auditors will thank you.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 7 ──────────────────────────────────── -->
+    <section class="section" id="ch7">
+      <div class="section-header">
+        <div class="section-num">07</div>
+        <h2 class="section-title">Writing the Bridge Service</h2>
+        <p class="section-subtitle">The Python service that connects MQTT to PostgreSQL</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          The bridge is the most important service in our stack. It subscribes to the MQTT broker,
+          receives every message, validates and parses the payload, and writes it to Postgres. It must
+          be resilient to broker disconnections, handle malformed payloads gracefully, and run
+          continuously without leaking memory.
+        </p>
+
+        <h3>Dependencies</h3>
+        <div class="pre-lang">text</div>
+        <div class="pre-wrap"><pre><code># bridge/requirements.txt
+paho-mqtt==2.1.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1</code></pre></div>
+
+        <h3>The complete bridge service</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># bridge/bridge.py
+"""
+MQTT → PostgreSQL bridge service.
+Subscribes to all topics (#) on the broker and persists
+every message to the telemetry and device_state tables.
+"""
+
+import json
+import logging
+import os
+import time
+from datetime import datetime, timezone
+
+import paho.mqtt.client as mqtt
+import psycopg2
+from psycopg2.extras import Json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ── Logging ───────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger(__name__)
+
+# ── Config ────────────────────────────────────────────────
+MQTT_HOST     = os.getenv("MQTT_HOST", "localhost")
+MQTT_PORT     = int(os.getenv("MQTT_PORT", 1883))
+MQTT_TOPIC    = os.getenv("MQTT_TOPIC", "#")
+MQTT_CLIENT_ID = "postgres-bridge-01"
+
+DB_DSN = (
+    f"host={os.getenv('DB_HOST', 'localhost')} "
+    f"port={os.getenv('DB_PORT', '5432')} "
+    f"dbname={os.getenv('DB_NAME', 'iot')} "
+    f"user={os.getenv('DB_USER', 'iot')} "
+    f"password={os.getenv('DB_PASSWORD', 'iot')}"
+)
+
+# ── Database connection ───────────────────────────────────
+def get_db_connection():
+    """Create a database connection with retry logic."""
+    for attempt in range(10):
+        try:
+            conn = psycopg2.connect(DB_DSN)
+            conn.autocommit = False
+            log.info("Database connected.")
+            return conn
+        except psycopg2.OperationalError as e:
+            log.warning(f"DB not ready (attempt {attempt+1}/10): {e}")
+            time.sleep(3)
+    raise RuntimeError("Could not connect to database after 10 attempts.")
+
+
+# ── Payload parsing ───────────────────────────────────────
+def parse_payload(raw: bytes) -> dict:
+    """Parse raw MQTT bytes as JSON. Return empty dict on failure."""
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        log.warning(f"Invalid payload: {e} — raw: {raw[:100]}")
+        return {"_raw": raw.decode("utf-8", errors="replace")}
+
+
+def extract_numeric(payload: dict) -> tuple[float | None, str | None]:
+    """Try to extract a numeric value and unit from common payload shapes."""
+    for key in ("value", "val", "reading", "level", "temp", "temperature"):
+        if key in payload:
+            try:
+                return float(payload[key]), payload.get("unit")
+            except (TypeError, ValueError):
+                pass
+    return None, None
+
+
+# ── Database writes ───────────────────────────────────────
+def insert_telemetry(cursor, topic: str, qos: int, payload: dict):
+    """Insert one message into the telemetry event log."""
+    value_num, unit = extract_numeric(payload)
+    # Extract metric from last topic segment
+    metric = topic.split("/")[-1] if "/" in topic else topic
+
+    cursor.execute(
+        """
+        INSERT INTO telemetry
+            (topic, device_id, qos, payload, metric, value_num, unit)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            topic,
+            payload.get("device_id", topic.split("/")[0]),
+            qos,
+            Json(payload),
+            metric,
+            value_num,
+            unit,
+        ),
+    )
+
+
+def upsert_device_state(cursor, topic: str, payload: dict):
+    """Update the current state table with the latest value."""
+    value_num, unit = extract_numeric(payload)
+    metric = topic.split("/")[-1] if "/" in topic else topic
+    device_id = payload.get("device_id", topic.split("/")[0])
+
+    cursor.execute(
+        """
+        INSERT INTO device_state (device_id, metric, value_num, unit, payload, last_seen)
+        VALUES (%s, %s, %s, %s, %s, NOW())
+        ON CONFLICT (device_id, metric) DO UPDATE
+            SET value_num = EXCLUDED.value_num,
+                unit      = EXCLUDED.unit,
+                payload   = EXCLUDED.payload,
+                last_seen = EXCLUDED.last_seen
+        """,
+        (device_id, metric, value_num, unit, Json(payload)),
+    )
+
+
+# ── MQTT callbacks ────────────────────────────────────────
+def on_connect(client, userdata, flags, reason_code, properties=None):
+    if reason_code == 0:
+        log.info(f"Connected to broker {MQTT_HOST}:{MQTT_PORT}")
+        client.subscribe(MQTT_TOPIC, qos=1)
+        log.info(f"Subscribed to: {MQTT_TOPIC}")
+    else:
+        log.error(f"Connection refused, reason code: {reason_code}")
+
+
+def on_disconnect(client, userdata, disconnect_flags, reason_code, properties=None):
+    log.warning(f"Disconnected from broker (rc={reason_code}). Reconnecting...")
+
+
+def make_on_message(db_conn):
+    """Factory: returns an on_message callback with the db connection in closure."""
+
+    def on_message(client, userdata, msg):
+        topic   = msg.topic
+        qos     = msg.qos
+        payload = parse_payload(msg.payload)
+
+        log.debug(f"RX {topic} qos={qos} payload={payload}")
+
+        try:
+            with db_conn.cursor() as cursor:
+                insert_telemetry(cursor, topic, qos, payload)
+                upsert_device_state(cursor, topic, payload)
+            db_conn.commit()
+        except psycopg2.Error as e:
+            log.error(f"DB write failed for topic {topic}: {e}")
+            db_conn.rollback()
+
+    return on_message
+
+
+# ── Entry point ───────────────────────────────────────────
+def main():
+    log.info("Starting MQTT → PostgreSQL bridge...")
+
+    db_conn = get_db_connection()
+
+    client = mqtt.Client(
+        client_id=MQTT_CLIENT_ID,
+        protocol=mqtt.MQTTv5,
+    )
+    client.on_connect    = on_connect
+    client.on_disconnect = on_disconnect
+    client.on_message    = make_on_message(db_conn)
+
+    client.connect(MQTT_HOST, MQTT_PORT, keepalive=60)
+
+    try:
+        client.loop_forever(retry_first_connection=True)
+    except KeyboardInterrupt:
+        log.info("Bridge shutting down.")
+    finally:
+        client.disconnect()
+        db_conn.close()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+
+        <div class="callout info">
+          <div class="callout-head">Why loop_forever?</div>
+          <p><code>loop_forever()</code> blocks the main thread and runs the MQTT network loop in the background, handling reconnections automatically. It is the correct pattern for a long-running bridge service. <code>retry_first_connection=True</code> means it will wait patiently if the broker starts after the bridge.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 8 ──────────────────────────────────── -->
+    <section class="section" id="ch8">
+      <div class="section-header">
+        <div class="section-num">08</div>
+        <h2 class="section-title">The Complete Docker Stack</h2>
+        <p class="section-subtitle">Running Mosquitto, Postgres, and the bridge service together</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          Docker Compose lets you define the entire stack — broker, database, and bridge — in a single
+          file, start it with one command, and share it reliably across machines and environments.
+        </p>
+
+        <h3>Bridge Dockerfile</h3>
+        <div class="pre-lang">dockerfile</div>
+        <div class="pre-wrap"><pre><code># bridge/Dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY bridge.py .
+
+CMD ["python", "-u", "bridge.py"]</code></pre></div>
+
+        <h3>Environment file</h3>
+        <div class="pre-lang">env</div>
+        <div class="pre-wrap"><pre><code># .env
+MQTT_HOST=mosquitto
+MQTT_PORT=1883
+MQTT_TOPIC=#
+
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=iot
+DB_USER=iot
+DB_PASSWORD=changeme_in_production</code></pre></div>
+
+        <h3>Complete docker-compose.yml</h3>
+        <div class="pre-lang">yaml</div>
+        <div class="pre-wrap"><pre><code>version: "3.9"
+
+services:
+
+  # ── MQTT Broker ──────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+
+  # ── PostgreSQL ───────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB:       iot
+      POSTGRES_USER:     iot
+      POSTGRES_PASSWORD: changeme_in_production
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot -d iot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Bridge Service ───────────────────────────────────
+  bridge:
+    build: ./bridge
+    container_name: mqtt-bridge
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:</code></pre></div>
+
+        <h3>Starting the full stack</h3>
+        <div class="pre-lang">shell</div>
+        <div class="pre-wrap"><pre><code># Build and start everything
+docker compose up --build -d
+
+# Watch bridge logs live
+docker compose logs -f bridge
+
+# Send a test message
+mosquitto_pub -h localhost -p 1883 \
+  -t "daresalaam/onomo/floor1/room101/temperature" \
+  -m '{"device_id":"temp-101","value":24.1,"unit":"celsius"}'
+
+# Query Postgres to confirm it arrived
+docker compose exec postgres \
+  psql -U iot -d iot -c "SELECT * FROM telemetry ORDER BY received_at DESC LIMIT 5;"</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 9 ──────────────────────────────────── -->
+    <section class="section" id="ch9">
+      <div class="section-header">
+        <div class="section-num">09</div>
+        <h2 class="section-title">Worked Example — Temperature Logger</h2>
+        <p class="section-subtitle">Simulating a hotel room sensor, end to end</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          We now have a running stack. Let us simulate a temperature sensor in hotel room 101 and
+          verify the entire journey from device to Postgres.
+        </p>
+
+        <h3>Python sensor simulator</h3>
+        <p>This script simulates a room sensor publishing readings every 10 seconds.</p>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># simulator/temp_sensor.py
+"""Simulates a temperature and humidity sensor in hotel room 101."""
+
+import json
+import random
+import time
+import paho.mqtt.client as mqtt
+
+BROKER     = "localhost"
+DEVICE_ID  = "temp-room101"
+ROOM_TOPIC = "daresalaam/onomo/floor1/room101"
+
+def publish_readings(client):
+    temperature = round(random.uniform(20.0, 27.0), 2)
+    humidity    = round(random.uniform(40.0, 65.0), 1)
+
+    # Publish temperature
+    client.publish(
+        f"{ROOM_TOPIC}/temperature",
+        json.dumps({
+            "device_id": DEVICE_ID,
+            "value": temperature,
+            "unit": "celsius",
+            "ts": int(time.time()),
+        }),
+        qos=1,
+    )
+
+    # Publish humidity
+    client.publish(
+        f"{ROOM_TOPIC}/humidity",
+        json.dumps({
+            "device_id": DEVICE_ID,
+            "value": humidity,
+            "unit": "percent",
+            "ts": int(time.time()),
+        }),
+        qos=1,
+    )
+    print(f"Published: temp={temperature}°C  humidity={humidity}%")
+
+
+def main():
+    client = mqtt.Client(client_id="sim-room101", protocol=mqtt.MQTTv5)
+    client.connect(BROKER, 1883, keepalive=60)
+    client.loop_start()
+
+    print("Sensor simulator started. Ctrl+C to stop.")
+    try:
+        while True:
+            publish_readings(client)
+            time.sleep(10)
+    except KeyboardInterrupt:
+        print("\nStopping simulator.")
+    finally:
+        client.loop_stop()
+        client.disconnect()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+
+        <h3>Verifying the data in Postgres</h3>
+        <p>Run these queries after the simulator has published a few readings.</p>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>-- Last 10 readings
+SELECT received_at, topic, metric, value_num, unit
+FROM   telemetry
+ORDER  BY received_at DESC
+LIMIT  10;
+
+-- Average temperature per hour for last 24 hours
+SELECT
+    date_trunc('hour', received_at)  AS hour,
+    AVG(value_num)                   AS avg_temp
+FROM   telemetry
+WHERE  metric  = 'temperature'
+AND    received_at > NOW() - INTERVAL '24 hours'
+GROUP  BY 1
+ORDER  BY 1;
+
+-- Current state of every device
+SELECT device_id, metric, value_num, unit, last_seen
+FROM   device_state
+ORDER  BY last_seen DESC;</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 10 ─────────────────────────────────── -->
+    <section class="section" id="ch10">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2 class="section-title">Worked Example — Device Heartbeats</h2>
+        <p class="section-subtitle">Tracking which devices are online and detecting silent failures</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          A heartbeat is a regular "I am alive" message that each device publishes on a known schedule.
+          If the heartbeat stops arriving, the device has failed, lost power, or lost network. Without
+          heartbeats you will not know a sensor has died until a human notices the dashboard shows stale data.
+        </p>
+
+        <h3>Adding heartbeat to firmware (MicroPython — Pico W)</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># Runs on Raspberry Pi Pico W using MicroPython
+import network
+import time
+import json
+from umqtt.simple import MQTTClient
+
+WIFI_SSID     = "YourNetwork"
+WIFI_PASSWORD = "YourPassword"
+BROKER_IP     = "192.168.1.100"  # Your Docker host IP
+DEVICE_ID     = "pico-room101"
+
+def connect_wifi():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    for _ in range(20):
+        if wlan.isconnected():
+            print("WiFi connected:", wlan.ifconfig())
+            return True
+        time.sleep(1)
+    return False
+
+
+def main():
+    if not connect_wifi():
+        print("WiFi failed — rebooting")
+        import machine; machine.reset()
+
+    client = MQTTClient(
+        DEVICE_ID,
+        BROKER_IP,
+        port=1883,
+        keepalive=60,
+    )
+    client.connect()
+    print("MQTT connected")
+
+    heartbeat_topic = f"devices/{DEVICE_ID}/heartbeat"
+
+    while True:
+        payload = json.dumps({
+            "device_id": DEVICE_ID,
+            "status": "online",
+            "uptime_s": time.ticks_ms() // 1000,
+            "ts": time.time(),
+        })
+        client.publish(heartbeat_topic, payload, retain=True, qos=1)
+        print("Heartbeat sent")
+        time.sleep(30)
+
+
+main()</code></pre></div>
+
+        <h3>Postgres query to find silent devices</h3>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>-- Devices that have not sent a heartbeat in 5 minutes
+SELECT
+    device_id,
+    last_seen,
+    NOW() - last_seen AS silent_for
+FROM   device_state
+WHERE  metric    = 'heartbeat'
+AND    last_seen < NOW() - INTERVAL '5 minutes'
+ORDER  BY last_seen ASC;</code></pre></div>
+
+        <div class="callout warn">
+          <div class="callout-head">MQTT Last Will and Testament</div>
+          <p>MQTT has a built-in feature called the Last Will and Testament (LWT). When you configure a LWT on connection, the broker automatically publishes a specific message if the client disconnects unexpectedly. Use this to write an "offline" status to the device_state table without any bridge code change.</p>
+        </div>
+
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># Set LWT before connecting (add to bridge.py or firmware)
+# If this client drops unexpectedly, the broker publishes this:
+client.will_set(
+    topic   = f"devices/{DEVICE_ID}/heartbeat",
+    payload = json.dumps({"device_id": DEVICE_ID, "status": "offline"}),
+    qos     = 1,
+    retain  = True,
+)</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 11 ─────────────────────────────────── -->
+    <section class="section" id="ch11">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2 class="section-title">Worked Example — Command and Control</h2>
+        <p class="section-subtitle">Sending commands from the server to devices over MQTT</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          MQTT is bidirectional. The same broker that carries telemetry up from devices to the server
+          can carry commands down from the server to devices. This is the foundation of every control
+          system: generator start/stop, room thermostat setpoints, announcement triggers, and relay
+          switching.
+        </p>
+
+        <h3>Command topic convention</h3>
+        <div class="pre-lang">text</div>
+        <div class="pre-wrap"><pre><code>Telemetry (device → server):   devices/{device_id}/telemetry/{metric}
+Commands  (server → device):   devices/{device_id}/cmd/{action}
+Responses (device → server):   devices/{device_id}/rsp/{action}</code></pre></div>
+
+        <h3>Postgres: commands table</h3>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>CREATE TABLE commands (
+    id          BIGSERIAL PRIMARY KEY,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    device_id   TEXT NOT NULL,
+    action      TEXT NOT NULL,
+    payload     JSONB NOT NULL DEFAULT '{}',
+    sent_at     TIMESTAMPTZ,
+    acked_at    TIMESTAMPTZ,
+    status      TEXT NOT NULL DEFAULT 'pending'
+                CHECK (status IN ('pending','sent','acked','failed')),
+    issued_by   TEXT
+);
+
+CREATE INDEX idx_commands_device_id ON commands (device_id);
+CREATE INDEX idx_commands_status    ON commands (status)
+    WHERE status IN ('pending', 'sent');</code></pre></div>
+
+        <h3>Command publisher (Python)</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># Send a command to a device and record it in Postgres
+import json, time
+import paho.mqtt.client as mqtt
+import psycopg2
+from psycopg2.extras import Json
+
+def send_command(device_id: str, action: str, payload: dict):
+    """Publish a command to a device and record it in the database."""
+
+    db = psycopg2.connect(DB_DSN)
+    topic = f"devices/{device_id}/cmd/{action}"
+    full_payload = {
+        "action":    action,
+        "device_id": device_id,
+        "payload":   payload,
+        "ts":        int(time.time()),
+    }
+
+    # Record in DB first (QoS 2 ensures delivery)
+    with db.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO commands (device_id, action, payload, sent_at, status)
+            VALUES (%s, %s, %s, NOW(), 'sent')
+            RETURNING id
+            """,
+            (device_id, action, Json(full_payload)),
+        )
+        cmd_id = cur.fetchone()[0]
+    db.commit()
+
+    # Publish with QoS 2 (exactly once — important for control actions)
+    client = mqtt.Client(protocol=mqtt.MQTTv5)
+    client.connect("localhost", 1883)
+    result = client.publish(topic, json.dumps(full_payload), qos=2)
+    result.wait_for_publish(timeout=5)
+    client.disconnect()
+    db.close()
+
+    print(f"Command {cmd_id} sent: {action} → {device_id}")
+    return cmd_id
+
+
+# Example: tell the generator to start
+send_command("gen-block-a", "start", {"mode": "auto", "priority": "high"})</code></pre></div>
+
+        <h3>Receiving commands on the device (MicroPython)</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code"># Device side: subscribe to command topic and execute actions
+import json
+from umqtt.simple import MQTTClient
+
+DEVICE_ID = "gen-block-a"
+
+def handle_command(topic, msg):
+    topic = topic.decode()
+    data  = json.loads(msg)
+    action = data.get("action")
+    print(f"Command received: {action}")
+
+    if action == "start":
+        start_generator()
+    elif action == "stop":
+        stop_generator()
+    elif action == "status":
+        publish_status()
+    else:
+        print(f"Unknown action: {action}")
+
+
+client = MQTTClient(DEVICE_ID, BROKER_IP, port=1883)
+client.set_callback(handle_command)
+client.connect()
+client.subscribe(f"devices/{DEVICE_ID}/cmd/#")
+
+while True:
+    client.check_msg()
+    time.sleep(0.1)</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 12 ─────────────────────────────────── -->
+    <section class="section" id="ch12">
+      <div class="section-header">
+        <div class="section-num">12</div>
+        <h2 class="section-title">Worked Example — Alert Engine</h2>
+        <p class="section-subtitle">Detecting out-of-range conditions and escalating them</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          Raw telemetry stored in Postgres is useful for reports and dashboards, but the real value
+          of a connected system is <strong>automatic detection of problems</strong>. The alert engine
+          reads the telemetry stream, evaluates each reading against configured thresholds, and writes
+          an alert record when a threshold is breached.
+        </p>
+
+        <h3>Alert rules table</h3>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>CREATE TABLE alert_rules (
+    id          SERIAL PRIMARY KEY,
+    device_id   TEXT,          -- NULL means apply to all devices
+    metric      TEXT NOT NULL,
+    operator    TEXT NOT NULL CHECK (operator IN ('>', '<', '>=', '<=', '=')),
+    threshold   DOUBLE PRECISION NOT NULL,
+    severity    TEXT NOT NULL DEFAULT 'warning',
+    message_tpl TEXT NOT NULL,
+    cooldown_s  INT  NOT NULL DEFAULT 300,  -- seconds between re-alerts
+    is_active   BOOLEAN NOT NULL DEFAULT true
+);
+
+-- Example rules
+INSERT INTO alert_rules (metric, operator, threshold, severity, message_tpl) VALUES
+    ('temperature', '>',  30.0, 'warning',  'Temperature exceeded 30°C on {device_id}'),
+    ('temperature', '>',  35.0, 'critical', 'CRITICAL: Temperature above 35°C on {device_id}'),
+    ('fuel',        '<',  50.0, 'warning',  'Generator fuel below 50 liters on {device_id}'),
+    ('heartbeat',   '<',   1.0, 'critical', 'Device {device_id} has gone offline');</code></pre></div>
+
+        <h3>Alert engine Python service</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code"># bridge/alert_engine.py
+"""
+Evaluate telemetry messages against alert rules.
+Called from the bridge after each telemetry insert.
+"""
+
+import logging
+from datetime import datetime, timezone, timedelta
+import psycopg2
+from psycopg2.extras import Json
+
+log = logging.getLogger(__name__)
+
+
+def check_and_raise_alerts(cursor, device_id: str, metric: str, value: float):
+    """Check value against all matching rules and insert alerts if triggered."""
+
+    # Fetch matching active rules
+    cursor.execute(
+        """
+        SELECT id, operator, threshold, severity, message_tpl, cooldown_s
+        FROM   alert_rules
+        WHERE  is_active = true
+        AND    metric    = %s
+        AND    (device_id IS NULL OR device_id = %s)
+        """,
+        (metric, device_id),
+    )
+    rules = cursor.fetchall()
+
+    for rule_id, operator, threshold, severity, message_tpl, cooldown_s in rules:
+        # Evaluate condition
+        triggered = eval_condition(value, operator, threshold)
+        if not triggered:
+            continue
+
+        # Check cooldown — do not spam if already alerted recently
+        cursor.execute(
+            """
+            SELECT created_at FROM alerts
+            WHERE  device_id = %s
+            AND    alert_type = %s
+            AND    resolved_at IS NULL
+            AND    created_at > NOW() - INTERVAL '%s seconds'
+            ORDER  BY created_at DESC LIMIT 1
+            """,
+            (device_id, f"rule:{rule_id}", cooldown_s),
+        )
+        if cursor.fetchone():
+            continue  # Still in cooldown
+
+        # Format message
+        message = message_tpl.replace("{device_id}", device_id)
+        message = message.replace("{value}", str(round(value, 2)))
+
+        # Insert alert
+        cursor.execute(
+            """
+            INSERT INTO alerts
+                (device_id, alert_type, severity, message, payload)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                device_id,
+                f"rule:{rule_id}",
+                severity,
+                message,
+                Json({"metric": metric, "value": value, "threshold": threshold}),
+            ),
+        )
+        log.warning(f"ALERT [{severity}]: {message}")
+
+
+def eval_condition(value: float, operator: str, threshold: float) -> bool:
+    ops = {'>': value > threshold, '<': value < threshold,
+           '>=': value >= threshold, '<=': value <= threshold,
+           '=': value == threshold}
+    return ops.get(operator, False)</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 13 ─────────────────────────────────── -->
+    <section class="section" id="ch13">
+      <div class="section-header">
+        <div class="section-num">13</div>
+        <h2 class="section-title">REST API Layer</h2>
+        <p class="section-subtitle">Serving Postgres data to web clients with a FastAPI service</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          The bridge writes data into Postgres continuously. Now we need an API that a web dashboard
+          or mobile app can query. We use <strong>FastAPI</strong> because it is fast, modern, and
+          produces automatic OpenAPI documentation.
+        </p>
+
+        <h3>API requirements file</h3>
+        <div class="pre-lang">text</div>
+        <div class="pre-wrap"><pre><code># api/requirements.txt
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+asyncpg==0.29.0
+python-dotenv==1.0.1</code></pre></div>
+
+        <h3>API service</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># api/main.py
+"""REST API over the IoT Postgres database."""
+
+import os
+from datetime import datetime
+from typing import Optional
+
+import asyncpg
+from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+load_dotenv()
+app = FastAPI(title="IoT Telemetry API", version="1.0")
+
+# Allow web dashboard on any origin (restrict in production)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+DB_DSN = (
+    f"postgresql://{os.getenv('DB_USER','iot')}:{os.getenv('DB_PASSWORD','iot')}"
+    f"@{os.getenv('DB_HOST','localhost')}:{os.getenv('DB_PORT','5432')}"
+    f"/{os.getenv('DB_NAME','iot')}"
+)
+
+@app.on_event("startup")
+async def startup():
+    app.state.pool = await asyncpg.create_pool(DB_DSN, min_size=2, max_size=10)
+
+@app.on_event("shutdown")
+async def shutdown():
+    await app.state.pool.close()
+
+
+@app.get("/devices")
+async def list_devices():
+    """All registered devices."""
+    async with app.state.pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, device_id, site, building, floor, room, device_type, is_active "
+            "FROM devices ORDER BY site, building, floor, room"
+        )
+    return [dict(r) for r in rows]
+
+
+@app.get("/state")
+async def current_state(site: Optional[str] = None):
+    """Last known reading for every device."""
+    async with app.state.pool.acquire() as conn:
+        if site:
+            rows = await conn.fetch(
+                """
+                SELECT s.device_id, s.metric, s.value_num, s.unit, s.last_seen
+                FROM   device_state s
+                JOIN   devices d ON d.device_id = s.device_id
+                WHERE  d.site = $1
+                ORDER  BY s.last_seen DESC
+                """, site,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT device_id, metric, value_num, unit, last_seen "
+                "FROM device_state ORDER BY last_seen DESC"
+            )
+    return [dict(r) for r in rows]
+
+
+@app.get("/telemetry/{device_id}")
+async def device_telemetry(
+    device_id: str,
+    metric:    Optional[str] = None,
+    hours:     int = Query(default=24, ge=1, le=168),
+    limit:     int = Query(default=500, ge=1, le=5000),
+):
+    """Recent telemetry history for a device."""
+    async with app.state.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT received_at, metric, value_num, unit
+            FROM   telemetry
+            WHERE  device_id    = $1
+            AND    received_at  > NOW() - ($2 * INTERVAL '1 hour')
+            AND    ($3::text IS NULL OR metric = $3)
+            ORDER  BY received_at DESC
+            LIMIT  $4
+            """,
+            device_id, hours, metric, limit,
+        )
+    return [dict(r) for r in rows]
+
+
+@app.get("/alerts")
+async def active_alerts(severity: Optional[str] = None):
+    """All unresolved alerts."""
+    async with app.state.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, created_at, device_id, alert_type, severity, message
+            FROM   alerts
+            WHERE  resolved_at IS NULL
+            AND    ($1::text IS NULL OR severity = $1)
+            ORDER  BY created_at DESC
+            LIMIT  200
+            """, severity,
+        )
+    return [dict(r) for r in rows]</code></pre></div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 14 ─────────────────────────────────── -->
+    <section class="section" id="ch14">
+      <div class="section-header">
+        <div class="section-num">14</div>
+        <h2 class="section-title">Live Web Dashboard</h2>
+        <p class="section-subtitle">A real-time HTML dashboard that subscribes to MQTT via WebSocket</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          The web dashboard uses two data channels simultaneously. It queries the REST API on load
+          to get the current state of all devices. Then it opens a WebSocket connection directly to
+          the Mosquitto broker on port 9001 and subscribes to all topics, so new readings appear
+          on screen in real time without polling.
+        </p>
+
+        <h3>Complete standalone dashboard page</h3>
+        <div class="pre-lang">html</div>
+        <div class="pre-wrap"><pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;IoT Live Dashboard&lt;/title&gt;
+  &lt;style&gt;
+    body { font-family: sans-serif; background: #0D2340; color: #F9F6EF; margin: 0; padding: 1.5rem; }
+    h1   { color: #B8922A; margin-bottom: 1rem; }
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .8rem; }
+    .card {
+      background: #14305A; border-radius: 8px; padding: 1rem;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .card .label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #7AAAD6; }
+    .card .value { font-size: 32px; font-weight: 700; color: #B8922A; line-height: 1; margin: .4rem 0; }
+    .card .topic { font-size: 11px; color: rgba(255,255,255,.4); word-break: break-all; }
+    #log  { margin-top: 1.5rem; background: #000; border-radius: 8px; padding: 1rem; max-height: 200px; overflow-y: auto; }
+    #log  p { margin: 0 0 .2rem; font-family: monospace; font-size: 12px; color: #7AAAD6; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Live IoT Dashboard&lt;/h1&gt;
+  &lt;div id="grid"&gt;&lt;/div&gt;
+  &lt;div id="log"&gt;&lt;/div&gt;
+
+  &lt;!-- Paho MQTT JavaScript client --&gt;
+  &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"&gt;&lt;/script&gt;
+  &lt;script&gt;
+    const API_BASE    = "http://localhost:8000";
+    const BROKER_HOST = "localhost";
+    const BROKER_PORT = 9001;  // WebSocket port
+    const cards = {};
+
+    // ── Load initial state from REST API ──────────────────
+    async function loadState() {
+      const res  = await fetch(`${API_BASE}/state`);
+      const data = await res.json();
+      data.forEach(row =&gt; updateCard(row.device_id, row.metric, row.value_num, row.unit, "init"));
+    }
+
+    // ── Connect to MQTT broker over WebSocket ─────────────
+    const mqttClient = new Paho.Client(BROKER_HOST, BROKER_PORT, `dashboard-${Date.now()}`);
+
+    mqttClient.onConnectionLost = (rc) =&gt; addLog(`Disconnected: ${rc.errorMessage}. Reconnecting...`);
+
+    mqttClient.onMessageArrived = (msg) =&gt; {
+      const topic = msg.destinationName;
+      try {
+        const payload = JSON.parse(msg.payloadString);
+        const metric  = topic.split("/").pop();
+        const device  = payload.device_id || topic.split("/")[0];
+        updateCard(device, metric, payload.value, payload.unit, "live");
+        addLog(`[${new Date().toLocaleTimeString()}] ${topic} → ${payload.value} ${payload.unit || ""}`);
+      } catch (e) {
+        addLog(`Parse error: ${msg.payloadString.substring(0, 60)}`);
+      }
+    };
+
+    mqttClient.connect({
+      onSuccess: () =&gt; {
+        addLog("Connected to MQTT broker via WebSocket.");
+        mqttClient.subscribe("#");
+      },
+      onFailure: (e) =&gt; addLog(`MQTT connect failed: ${e.errorMessage}`),
+    });
+
+    // ── UI helpers ────────────────────────────────────────
+    function updateCard(device, metric, value, unit, source) {
+      const key = `${device}__${metric}`;
+      if (!cards[key]) {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.id = key;
+        div.innerHTML = `
+          &lt;div class="label"&gt;${metric}&lt;/div&gt;
+          &lt;div class="value" id="${key}-val"&gt;—&lt;/div&gt;
+          &lt;div class="topic"&gt;${device}&lt;/div&gt;`;
+        document.getElementById("grid").appendChild(div);
+        cards[key] = true;
+      }
+      const el = document.getElementById(`${key}-val`);
+      if (el) el.textContent = `${value ?? "—"} ${unit || ""}`;
+    }
+
+    function addLog(msg) {
+      const log = document.getElementById("log");
+      const p = document.createElement("p");
+      p.textContent = msg;
+      log.prepend(p);
+      while (log.children.length &gt; 50) log.removeChild(log.lastChild);
+    }
+
+    loadState();
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre></div>
+
+        <div class="callout ok">
+          <div class="callout-head">How it works</div>
+          <p>On page load, the dashboard fetches current state from the REST API so cards populate immediately. Then the Paho MQTT WebSocket client connects to Mosquitto on port 9001 and subscribes to all topics. Every new sensor reading updates the matching card in real time — no refresh needed, no polling.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CHAPTER 15 ─────────────────────────────────── -->
+    <section class="section" id="ch15">
+      <div class="section-header">
+        <div class="section-num">15</div>
+        <h2 class="section-title">Production Hardening</h2>
+        <p class="section-subtitle">What you must add before this runs in a real building</p>
+      </div>
+      <hr class="section-rule" />
+      <div class="prose">
+        <p>
+          The stack above is fully functional and educational. Before deploying it in a hotel, hospital,
+          or industrial facility, you must address these areas. Skipping them is not a shortcut — it
+          is a liability.
+        </p>
+
+        <h3>1. Authentication and TLS on the broker</h3>
+        <div class="pre-lang">conf</div>
+        <div class="pre-wrap"><pre><code># mosquitto.conf — production additions
+
+# TLS listener
+listener 8883
+protocol mqtt
+cafile   /mosquitto/certs/ca.crt
+certfile /mosquitto/certs/server.crt
+keyfile  /mosquitto/certs/server.key
+require_certificate false
+
+# Password file authentication
+allow_anonymous false
+password_file /mosquitto/config/passwd
+
+# ACL: limit which clients can publish/subscribe to which topics
+acl_file /mosquitto/config/acl</code></pre></div>
+
+        <h3>2. Connection pooling with PgBouncer</h3>
+        <p>Every bridge reconnect attempts a new Postgres connection. At scale, direct connections
+        exhaust Postgres capacity. Add PgBouncer in transaction-pool mode between your services and Postgres.</p>
+        <div class="pre-lang">yaml</div>
+        <div class="pre-wrap"><pre><code>  pgbouncer:
+    image: edoburu/pgbouncer:1.22
+    environment:
+      DATABASE_URL: "postgres://iot:changeme@postgres:5432/iot"
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 200
+      DEFAULT_POOL_SIZE: 25
+    ports:
+      - "5433:5432"
+    depends_on:
+      - postgres</code></pre></div>
+
+        <h3>3. Database partitioning for long-term data</h3>
+        <div class="pre-lang">sql</div>
+        <div class="pre-wrap"><pre><code>-- Partition telemetry by month to keep queries fast as rows grow
+CREATE TABLE telemetry_2026_05
+    PARTITION OF telemetry
+    FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+
+CREATE TABLE telemetry_2026_06
+    PARTITION OF telemetry
+    FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
+
+-- Use pg_partman extension to automate partition creation</code></pre></div>
+
+        <h3>4. Monitoring and observability</h3>
+        <ol class="steps">
+          <li><p>Add <strong>Prometheus metrics</strong> to the bridge service (message rate, insert latency, error count).</p></li>
+          <li><p>Add a <strong>Grafana</strong> container to your stack for dashboards over Postgres and metrics.</p></li>
+          <li><p>Use <strong>Loki</strong> or ship logs to a central syslog so you can search across all services.</p></li>
+          <li><p>Set up <strong>pg_stat_statements</strong> in Postgres to identify slow queries before they cause outages.</p></li>
+        </ol>
+
+        <h3>5. Graceful restart and backpressure</h3>
+        <div class="pre-lang">python</div>
+        <div class="pre-wrap"><pre><code># Add a queue buffer in the bridge to decouple MQTT receive rate
+# from Postgres write rate — prevents message loss under DB load spikes
+import queue, threading
+
+message_queue = queue.Queue(maxsize=10000)
+
+def on_message(client, userdata, msg):
+    """Fast path: just enqueue."""
+    try:
+        message_queue.put_nowait((msg.topic, msg.qos, msg.payload))
+    except queue.Full:
+        log.error("Message queue full — dropping message. Scale the writer.")
+
+def db_writer_thread(db_conn):
+    """Dedicated thread for DB writes, drains the queue."""
+    while True:
+        topic, qos, raw = message_queue.get()
+        payload = parse_payload(raw)
+        try:
+            with db_conn.cursor() as cur:
+                insert_telemetry(cur, topic, qos, payload)
+                upsert_device_state(cur, topic, payload)
+            db_conn.commit()
+        except Exception as e:
+            log.error(f"Writer error: {e}")
+            db_conn.rollback()
+        finally:
+            message_queue.task_done()
+
+# Start the writer thread
+threading.Thread(target=db_writer_thread, args=(db_conn,), daemon=True).start()</code></pre></div>
+
+        <div class="callout ok">
+          <div class="callout-head">You have built a complete system</div>
+          <p>From MQTT broker through schema design, the bridge service, command control, alert engine, REST API, and live web dashboard — this is a full-stack IoT backend. The same architecture runs hotel room sensors, generator monitoring systems, fire panel bridges, and building automation overlays. The only difference between projects is the topic schema and business logic, not the infrastructure.</p>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-head">What to build next</div>
+          <p>Take this stack and deploy a temperature and heartbeat monitor for a single room. Run it for 72 hours. Fix the failures you find. Then add alerts, then the command channel, then the dashboard. Real learning is iterative deployment and real failure. The architecture will hold. Your skills will grow.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function () {
+    // ── Copy buttons ──────────────────────────────────────
+    document.querySelectorAll('pre').forEach(function (pre) {
+      var wrap = document.createElement('div');
+      wrap.className = 'pre-wrap';
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+      var btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.setAttribute('aria-label', 'Copy code');
+      btn.addEventListener('click', function () {
+        navigator.clipboard.writeText(pre.innerText).then(function () {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+
+    // ── Active nav on scroll ──────────────────────────────
+    var sections = document.querySelectorAll('.section[id]');
+    var links    = document.querySelectorAll('.nav-link');
+    if (!('IntersectionObserver' in window)) return;
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          links.forEach(function (l) {
+            l.classList.toggle('active', l.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+    sections.forEach(function (s) { obs.observe(s); });
+  }());
+</script>
+</body>
+</html>

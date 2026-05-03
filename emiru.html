@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bringing It All Together to Build and Shake the World | code::core</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0D2340;
+      --blue-800: #14305A;
+      --blue-700: #1E4D8C;
+      --blue-500: #3970B8;
+      --blue-300: #7AAAD6;
+      --blue-50: #EAF0FA;
+      --gold: #B8922A;
+      --ivory: #F9F6EF;
+      --ink: #1C1A16;
+      --ink-mid: #3D3A32;
+      --ink-soft: #6B6760;
+      --rule: #D5CFC3;
+      --parch: #EDE8DC;
+      --green: #2A6B43;
+      --green-bg: #EAF3EE;
+      --amber: #9A5B0A;
+      --amber-bg: #FDF3E3;
+      --red: #8C2020;
+      --red-bg: #FAEAEA;
+      --r: 10px;
+      --rs: 6px;
+      --rl: 16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.85;
+    }
+
+    .wrapper { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--navy);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand {
+      padding: 2rem 1.75rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+    }
+    .brand-wordmark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--ivory);
+      margin-bottom: .3rem;
+    }
+    .brand-wordmark span { color: var(--gold); }
+    .brand-sub {
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--blue-300);
+      font-weight: 600;
+    }
+
+    .nav-group { padding: 1.15rem 1.75rem .4rem; }
+    .nav-group-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      color: var(--blue-300);
+      font-weight: 600;
+      opacity: .75;
+      margin-bottom: .65rem;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      text-decoration: none;
+      color: rgba(255, 255, 255, .66);
+      font-size: 13px;
+      font-weight: 400;
+      padding: .45rem .6rem;
+      border-radius: var(--rs);
+      margin-bottom: 2px;
+      transition: all .15s ease;
+    }
+    .nav-link:hover { background: rgba(255, 255, 255, .08); color: var(--ivory); }
+    .nav-link.active {
+      background: var(--gold);
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .nav-num {
+      width: 18px;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, .12);
+      color: rgba(255, 255, 255, .6);
+    }
+    .nav-link.active .nav-num {
+      background: rgba(13, 35, 64, .2);
+      color: var(--navy);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, .12);
+      padding: 1.1rem 1.75rem;
+      font-size: 11px;
+      color: rgba(255, 255, 255, .38);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 3.4rem 5rem 5rem;
+      max-width: 980px;
+    }
+
+    .hero {
+      background: var(--navy);
+      border-radius: var(--rl);
+      padding: 3.3rem;
+      margin-bottom: 3.2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -60px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(184, 146, 42, .25) 0%, transparent 72%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: -45px;
+      bottom: -45px;
+      width: 210px;
+      height: 210px;
+      background: radial-gradient(circle, rgba(30, 77, 140, .45) 0%, transparent 72%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: .9rem;
+      position: relative;
+      z-index: 1;
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 54px;
+      line-height: 1.03;
+      color: var(--ivory);
+      font-weight: 600;
+      margin-bottom: 1.1rem;
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+    }
+    .hero h1 em { color: var(--gold); font-style: italic; }
+    .hero p {
+      color: rgba(249, 246, 239, .75);
+      max-width: 660px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid rgba(255, 255, 255, .14);
+      position: relative;
+      z-index: 1;
+    }
+    .stat {
+      border-right: 1px solid rgba(255, 255, 255, .12);
+      padding-right: .8rem;
+    }
+    .stat:last-child { border-right: none; }
+    .stat .v {
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--gold);
+      font-size: 27px;
+      line-height: 1;
+      margin-bottom: .2rem;
+      font-weight: 600;
+    }
+    .stat .k {
+      color: rgba(249, 246, 239, .68);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 600;
+    }
+
+    .section {
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: 2rem 2.1rem;
+      margin-bottom: 1rem;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: .9rem;
+    }
+    .section-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--navy);
+      color: var(--ivory);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .section h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 31px;
+      color: var(--ink);
+      line-height: 1.15;
+      font-weight: 600;
+    }
+    .section h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 23px;
+      margin-top: 1rem;
+      margin-bottom: .35rem;
+      color: var(--blue-800);
+      font-weight: 600;
+    }
+    .section p + p { margin-top: .7rem; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+      margin-top: .9rem;
+    }
+    .tile {
+      background: var(--ivory);
+      border: 1px solid var(--rule);
+      border-radius: var(--rs);
+      padding: .9rem;
+    }
+    .tile h4 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--blue-700);
+      margin-bottom: .25rem;
+    }
+
+    .callout {
+      border-left: 4px solid;
+      padding: .9rem 1rem;
+      border-radius: var(--rs);
+      margin-top: .95rem;
+    }
+    .callout.ok { border-color: var(--green); background: var(--green-bg); }
+    .callout.warn { border-color: var(--amber); background: var(--amber-bg); }
+    .callout.info { border-color: var(--blue-500); background: var(--blue-50); }
+
+    .phase {
+      margin-top: 1.1rem;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .phase-head {
+      background: linear-gradient(90deg, var(--navy), var(--blue-700));
+      color: var(--ivory);
+      padding: .85rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+    }
+    .phase-head strong {
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: .04em;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .phase-head span {
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .phase-body {
+      background: #fff;
+      padding: .95rem 1rem 1rem;
+      border-top: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    ul.plan {
+      list-style: none;
+      margin-top: .4rem;
+    }
+    ul.plan li {
+      position: relative;
+      padding-left: 1rem;
+      margin-bottom: .38rem;
+      color: var(--ink-mid);
+    }
+    ul.plan li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .75em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .score {
+      margin-top: 1rem;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .score table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .score th,
+    .score td {
+      border-bottom: 1px solid var(--rule);
+      padding: .65rem .75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .score th {
+      background: var(--parch);
+      color: var(--navy);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      font-weight: 700;
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .9rem;
+      margin-top: .9rem;
+    }
+    .month-card {
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      background: #fff;
+      overflow: hidden;
+    }
+    .month-head {
+      background: var(--parch);
+      border-bottom: 1px solid var(--rule);
+      padding: .6rem .75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .6rem;
+    }
+    .month-head strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+    .month-head span {
+      color: var(--blue-700);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .month-body { padding: .75rem .8rem .8rem; }
+
+    .week-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: .8rem;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+    .week-table th,
+    .week-table td {
+      padding: .55rem .65rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+      text-align: left;
+    }
+    .week-table th {
+      width: 20%;
+      background: var(--parch);
+      color: var(--navy);
+      font-size: 10px;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .system-track {
+      margin-top: .9rem;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      background: #fff;
+      overflow: hidden;
+    }
+    .system-track h4 {
+      background: linear-gradient(90deg, var(--blue-800), var(--blue-700));
+      color: var(--ivory);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      font-weight: 700;
+      padding: .6rem .75rem;
+    }
+    .system-track .track-body { padding: .75rem .8rem .85rem; }
+
+    .stage-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+      margin-top: .85rem;
+    }
+    .stage {
+      border: 1px solid var(--rule);
+      border-radius: var(--rs);
+      background: var(--ivory);
+      padding: .75rem;
+    }
+    .stage .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--blue-700);
+      margin-bottom: .2rem;
+      display: block;
+    }
+
+    .daily-board {
+      margin-top: .85rem;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: .8rem;
+      background: var(--ivory);
+    }
+    .daily-board h4 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--navy);
+      font-weight: 700;
+      margin-bottom: .35rem;
+    }
+
+    .chapter {
+      margin-top: 1rem;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      overflow: hidden;
+      background: #fff;
+    }
+    .chapter .chapter-head {
+      background: var(--navy);
+      color: var(--ivory);
+      padding: .7rem .8rem;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .chapter .chapter-body { padding: .85rem .9rem .9rem; }
+
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+      margin-top: .9rem;
+    }
+    .day-card {
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      overflow: hidden;
+      background: #fff;
+    }
+    .day-card .day-head {
+      background: var(--parch);
+      border-bottom: 1px solid var(--rule);
+      padding: .55rem .7rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--navy);
+    }
+    .day-card .day-body {
+      padding: .65rem .75rem .75rem;
+      font-size: 14px;
+      color: var(--ink-mid);
+    }
+
+    .footer {
+      margin-top: 1.2rem;
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @media (max-width: 1080px) {
+      .main { padding: 2.2rem 2rem 3rem; }
+      .hero h1 { font-size: 44px; }
+      .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stat { border-right: none; }
+    }
+
+    @media (max-width: 860px) {
+      .wrapper { display: block; }
+      .sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        position: static;
+        max-height: none;
+      }
+      .grid-2 { grid-template-columns: 1fr; }
+      .hero { padding: 2rem 1.4rem; }
+      .hero h1 { font-size: 37px; }
+      .section { padding: 1.2rem 1rem; }
+      .section h2 { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-wordmark">code<span>::</span>core</div>
+        <div class="brand-sub">Personal Strategy Edition</div>
+      </div>
+
+      <nav>
+        <div class="nav-group">
+          <div class="nav-group-label">Volume I</div>
+          <a class="nav-link" href="#north-star"><span class="nav-num">01</span>North Star</a>
+          <a class="nav-link" href="#stack"><span class="nav-num">02</span>Capability Stack</a>
+          <a class="nav-link" href="#ten-year"><span class="nav-num">03</span>10-Year Plan</a>
+          <a class="nav-link" href="#year-one"><span class="nav-num">04</span>Year 1 Calendar</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">Volume II</div>
+          <a class="nav-link" href="#ninety"><span class="nav-num">05</span>90-Day Launch</a>
+          <a class="nav-link" href="#daily"><span class="nav-num">06</span>Day by Day Engine</a>
+          <a class="nav-link" href="#first30"><span class="nav-num">07</span>First 30 Days</a>
+          <a class="nav-link" href="#projects"><span class="nav-num">08</span>Project Playbook</a>
+          <a class="nav-link" href="#hotel"><span class="nav-num">09</span>Hotel Blueprint</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">Volume III</div>
+          <a class="nav-link" href="#systems"><span class="nav-num">10</span>System Tracks</a>
+          <a class="nav-link" href="#money"><span class="nav-num">11</span>Wealth Path</a>
+          <a class="nav-link" href="#scorecard"><span class="nav-num">12</span>Scorecard</a>
+          <a class="nav-link" href="#pledge"><span class="nav-num">13</span>Pledge</a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">Bringing It All Together Book v2.0</div>
+    </aside>
+
+    <main class="main">
+      <header class="hero">
+        <div class="hero-eyebrow">Builder's Operating Manual</div>
+        <h1>Bringing It All Together to Build and <em>Shake the World</em></h1>
+        <p>
+          You asked for a full book, not a motivational note. This is your practical manual for the next decade,
+          with month-by-month and day-by-day execution. It is built around real hardware with Pico and ESP32,
+          connected to Docker, Postgres, and production system design.
+        </p>
+        <div class="hero-stats">
+          <div class="stat"><div class="v">12</div><div class="k">Chapters</div></div>
+          <div class="stat"><div class="v">365</div><div class="k">Daily Actions</div></div>
+          <div class="stat"><div class="v">5</div><div class="k">System Verticals</div></div>
+          <div class="stat"><div class="v">10</div><div class="k">Year Horizon</div></div>
+        </div>
+      </header>
+
+      <section class="section" id="north-star">
+        <div class="section-head">
+          <div class="section-num">01</div>
+          <h2>North Star: Build Systems That Matter</h2>
+        </div>
+        <p>
+          Your mission for the next decade is to become a high-trust embedded and systems architect who can ship
+          complete solutions from sensor to dashboard to operations process. This means hardware reliability,
+          software quality, and business usefulness are all part of your craft.
+        </p>
+        <div class="daily-board">
+          <h4>Decision Filter</h4>
+          <ul class="plan">
+            <li>Does this deepen my stack: embedded plus systems plus operations?</li>
+            <li>Does this produce reusable IP I can deploy again?</li>
+            <li>Does this improve my earning power without reducing life quality?</li>
+          </ul>
+        </div>
+        <div class="callout info">
+          If an opportunity fails two of the three filters, park it. Your power comes from focused compounding.
+        </div>
+      </section>
+
+      <section class="section" id="stack">
+        <div class="section-head">
+          <div class="section-num">02</div>
+          <h2>Capability Stack: Your Unfair Combination</h2>
+        </div>
+        <p>Most people choose one lane. Your strength is combining lanes.</p>
+        <ul class="plan">
+          <li>Mechanical intuition from years of fixing real machines.</li>
+          <li>Infrastructure and networking discipline from enterprise systems.</li>
+          <li>Embedded execution on Pico and ESP32 for edge intelligence.</li>
+          <li>Rust and C-level rigor for robust, low-fault software.</li>
+          <li>Docker and Postgres backbone for central telemetry and analytics.</li>
+        </ul>
+        <div class="stage-list">
+          <div class="stage">
+            <span class="tag">Build Skill</span>
+            <p>Design once, deploy many times: reusable modules, repeatable install scripts, and test templates.</p>
+          </div>
+          <div class="stage">
+            <span class="tag">Business Skill</span>
+            <p>Frame every build as operational cost saving, compliance support, or service-quality upgrade.</p>
+          </div>
+        </div>
+        <div class="callout ok">
+          Your edge is practical credibility. You can speak to electricians, IT managers, and operations leaders in one room.
+        </div>
+      </section>
+
+      <section class="section" id="ten-year">
+        <div class="section-head">
+          <div class="section-num">03</div>
+          <h2>10-Year Roadmap</h2>
+        </div>
+
+        <article class="phase">
+          <div class="phase-head"><strong>Phase 1: Foundation Lock-In</strong><span>Years 1-2</span></div>
+          <div class="phase-body">
+            <ul class="plan">
+              <li>Standardize your edge stack: Pico and ESP32 firmware, MQTT transport, Docker APIs, Postgres schema.</li>
+              <li>Ship three production-grade prototypes: building management, generator control, hotel communication.</li>
+              <li>Build testing habits: fault injection, network outage behavior, watchdog reset and recovery scripts.</li>
+              <li>Create public evidence: architecture notes, deployment checklists, failure reports, and lessons learned.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div class="phase-head"><strong>Phase 2: Productization</strong><span>Years 3-5</span></div>
+          <div class="phase-body">
+            <ul class="plan">
+              <li>Convert prototypes into products: install scripts, onboarding docs, support and maintenance plans.</li>
+              <li>Own one vertical strongly, then expand. Start with hospitality and facilities operations.</li>
+              <li>Establish recurring contracts for support, alerting, and device health monitoring.</li>
+              <li>Train junior implementers to increase throughput without reducing quality.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div class="phase-head"><strong>Phase 3: Scale and Leadership</strong><span>Years 6-10</span></div>
+          <div class="phase-body">
+            <ul class="plan">
+              <li>Run multi-site deployments across hotels, campuses, hospitals, or industrial sites.</li>
+              <li>Build a compact elite team for firmware, backend, integrations, and operations excellence.</li>
+              <li>Protect IP and build licensing models for regional deployment partners.</li>
+              <li>Shift wealth from active income to compounding assets and strategic ownership.</li>
+            </ul>
+          </div>
+        </article>
+
+        <div class="callout warn">
+          The trap is endless one-off projects. Your goal is repeatable systems, not permanent firefighting.
+        </div>
+      </section>
+
+      <section class="section" id="year-one">
+        <div class="section-head">
+          <div class="section-num">04</div>
+          <h2>Year One, Month by Month</h2>
+        </div>
+        <p>This is your first 12-month chapter plan. Each month has one build objective and one business objective.</p>
+        <div class="book-grid">
+          <div class="month-card">
+            <div class="month-head"><strong>Month 01</strong><span>Foundation</span></div>
+            <div class="month-body">
+              <ul class="plan">
+                <li>Assemble hardware bench: Pico, ESP32 DevKit, sensors, relays, dev power.</li>
+                <li>Stand up Docker stack with Postgres and API service.</li>
+                <li>Publish first architecture diagram and component inventory.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 02</strong><span>Data Path</span></div>
+            <div class="month-body"><ul class="plan"><li>Build sensor-to-MQTT-to-Postgres pipeline.</li><li>Add health heartbeat and reconnect logic.</li><li>Create daily data dashboard.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 03</strong><span>Control Loop</span></div>
+            <div class="month-body"><ul class="plan"><li>Build command path from backend to device.</li><li>Implement safety checks and command audit table.</li><li>Demo closed-loop control video.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 04</strong><span>Reliability</span></div>
+            <div class="month-body"><ul class="plan"><li>Add watchdog and restart-recovery behavior.</li><li>Write failure-mode checklist.</li><li>Run 72-hour endurance test.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 05</strong><span>Hotel Pilot</span></div>
+            <div class="month-body"><ul class="plan"><li>Build room-announcement service via TV middleware API.</li><li>Create admin panel and message scheduling.</li><li>Document policy and delivery logs.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 06</strong><span>Phone Channel</span></div>
+            <div class="month-body"><ul class="plan"><li>Integrate SMS and WhatsApp fallback notifications.</li><li>Implement acknowledgment tracking.</li><li>Create incident report export.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 07</strong><span>Generator Ops</span></div>
+            <div class="month-body"><ul class="plan"><li>Connect generator telemetry and alarms.</li><li>Track fuel, runtime, and maintenance intervals.</li><li>Set escalation rules for downtime risk.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 08</strong><span>Fire Panel Bridge</span></div>
+            <div class="month-body"><ul class="plan"><li>Read fire panel status via approved interfaces.</li><li>Mirror event stream into secure backend.</li><li>Build compliance event timeline view.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 09</strong><span>BMS Core</span></div>
+            <div class="month-body"><ul class="plan"><li>Implement HVAC and room-state supervisory model.</li><li>Add threshold rules and automation actions.</li><li>Run pilot in a single facility zone.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 10</strong><span>Autopilot Logic</span></div>
+            <div class="month-body"><ul class="plan"><li>Implement constrained autopilot routines with safety bounds.</li><li>Add simulation and shadow mode.</li><li>Publish safety case document.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 11</strong><span>Packaging</span></div>
+            <div class="month-body"><ul class="plan"><li>Build installer scripts and standard deployment kit.</li><li>Create training docs and runbook bundles.</li><li>Pilot with one paying customer.</li></ul></div>
+          </div>
+          <div class="month-card">
+            <div class="month-head"><strong>Month 12</strong><span>Scale Setup</span></div>
+            <div class="month-body"><ul class="plan"><li>Design 3-year product map and pricing model.</li><li>Build partner onboarding checklist.</li><li>Set next-year revenue and product targets.</li></ul></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="ninety">
+        <div class="section-head">
+          <div class="section-num">05</div>
+          <h2>90-Day Launch Play by Play</h2>
+        </div>
+        <p>Use this exactly as written to move from room-build to field-ready prototype.</p>
+        <div class="chapter">
+          <div class="chapter-head">Weeks 1-4: Build the Core Stack</div>
+          <div class="chapter-body">
+            <ul class="plan">
+              <li>Week 1: device firmware baseline on Pico and ESP32, including logging and reconnect.</li>
+              <li>Week 2: Docker services for API, MQTT broker, and Postgres persistence.</li>
+              <li>Week 3: command-and-control path with role-based API keys and audit logs.</li>
+              <li>Week 4: dashboard showing device status, uptime, and event stream.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="chapter">
+          <div class="chapter-head">Weeks 5-8: Build a Vertical Pilot</div>
+          <div class="chapter-body">
+            <ul class="plan">
+              <li>Week 5: choose pilot narrative, hotel announcements, generator monitoring, or fire-event bridge.</li>
+              <li>Week 6: implement scenario-specific workflows and role screens.</li>
+              <li>Week 7: run resilience test, outages, bad payloads, stale data, and clock drift.</li>
+              <li>Week 8: produce deployment guide and demo recording.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="chapter">
+          <div class="chapter-head">Weeks 9-12: Prepare for Real Use</div>
+          <div class="chapter-body">
+            <ul class="plan">
+              <li>Week 9: add access controls and event retention policy.</li>
+              <li>Week 10: create operational runbooks for incidents and maintenance.</li>
+              <li>Week 11: run user acceptance with one decision-maker.</li>
+              <li>Week 12: convert to paid pilot or support contract.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout info">
+          Rule: every 90-day cycle must end with one deployment-ready package and one signed commercial next step.
+        </div>
+      </section>
+
+      <section class="section" id="daily">
+        <div class="section-head">
+          <div class="section-num">06</div>
+          <h2>Day by Day Engine (Every Week)</h2>
+        </div>
+        <p>This is the weekly structure to repeat for years. Keep it simple, measurable, and honest.</p>
+        <table class="week-table">
+          <tbody>
+            <tr><th>Monday</th><td>Architecture and planning day. Define this week deliverable, constraints, test plan.</td></tr>
+            <tr><th>Tuesday</th><td>Firmware build day. Device drivers, control loops, watchdog, and telemetry integrity.</td></tr>
+            <tr><th>Wednesday</th><td>Backend day. Docker services, Postgres schema updates, API hardening, data quality checks.</td></tr>
+            <tr><th>Thursday</th><td>Integration day. Device-to-cloud validation, command path, failure injection, retries.</td></tr>
+            <tr><th>Friday</th><td>Demo and docs day. Record evidence, update runbook, publish case notes.</td></tr>
+            <tr><th>Saturday</th><td>Market day. Talk to users, collect pain points, draft next offer or feature.</td></tr>
+            <tr><th>Sunday</th><td>Recovery and review day. Score your week, set top 3 outcomes for next week.</td></tr>
+          </tbody>
+        </table>
+        <div class="daily-board">
+          <h4>Daily Minimum (Even in Busy Weeks)</h4>
+          <ul class="plan">
+            <li>60 minutes build time on code or hardware.</li>
+            <li>20 minutes reading and note consolidation.</li>
+            <li>10 minutes update to project log.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="first30">
+        <div class="section-head">
+          <div class="section-num">07</div>
+          <h2>First 30 Days: Play by Play</h2>
+        </div>
+        <p>If you follow this exactly, you will have a working baseline platform by day 30.</p>
+        <div class="day-grid">
+          <div class="day-card"><div class="day-head">Days 01-03</div><div class="day-body">Prepare workspace, hardware bench, repo structure, and Docker compose services.</div></div>
+          <div class="day-card"><div class="day-head">Days 04-06</div><div class="day-body">Flash Pico and ESP32 baseline firmware with serial logging and heartbeat topics.</div></div>
+          <div class="day-card"><div class="day-head">Days 07-09</div><div class="day-body">Stand up Postgres schema: devices, telemetry, events, commands, acknowledgments.</div></div>
+          <div class="day-card"><div class="day-head">Days 10-12</div><div class="day-body">Build ingest API and MQTT bridge, verify data arrives and is queryable.</div></div>
+          <div class="day-card"><div class="day-head">Days 13-15</div><div class="day-body">Add control commands from backend to device with signed payload checks.</div></div>
+          <div class="day-card"><div class="day-head">Days 16-18</div><div class="day-body">Implement watchdog and reconnection behavior. Test network interruption scenarios.</div></div>
+          <div class="day-card"><div class="day-head">Days 19-21</div><div class="day-body">Create dashboard for status, alarms, and per-device event timeline.</div></div>
+          <div class="day-card"><div class="day-head">Days 22-24</div><div class="day-body">Pick one vertical pilot, hotel announcements, generator telemetry, or fire panel bridge.</div></div>
+          <div class="day-card"><div class="day-head">Days 25-27</div><div class="day-body">Implement vertical logic and generate first operational report output.</div></div>
+          <div class="day-card"><div class="day-head">Days 28-30</div><div class="day-body">Run final test cycle, record demo, and package install plus runbook docs.</div></div>
+        </div>
+        <div class="callout info">By day 30 you must have a demo that someone else can understand in under five minutes.</div>
+      </section>
+
+      <section class="section" id="projects">
+        <div class="section-head">
+          <div class="section-num">08</div>
+          <h2>Project Playbook: Pico + ESP32 + Docker + Postgres</h2>
+        </div>
+        <p>Use this baseline architecture for every system so your learning and code both compound.</p>
+        <div class="stage-list">
+          <div class="stage"><span class="tag">Edge Layer</span><p>Pico and ESP32 read sensors, run local rules, and publish telemetry.</p></div>
+          <div class="stage"><span class="tag">Transport</span><p>MQTT with retained health topics and signed command channel.</p></div>
+          <div class="stage"><span class="tag">Core Services</span><p>Dockerized API, auth service, rules engine, and worker queue.</p></div>
+          <div class="stage"><span class="tag">Data Layer</span><p>Postgres for event store, state tables, acknowledgments, and audits.</p></div>
+          <div class="stage"><span class="tag">Control Plane</span><p>Web console for operators, with role access and incident workflows.</p></div>
+          <div class="stage"><span class="tag">Ops Layer</span><p>Backups, alerts, deployment scripts, and rollback procedures.</p></div>
+        </div>
+      </section>
+
+      <section class="section" id="hotel">
+        <div class="section-head">
+          <div class="section-num">09</div>
+          <h2>Hotel Blueprint: Replace Paper Announcements</h2>
+        </div>
+        <p>Target scenario: hotel operations can publish announcements to in-room TV and phone channels in minutes.</p>
+        <div class="system-track">
+          <h4>System Design</h4>
+          <div class="track-body">
+            <ul class="plan">
+              <li>Operator creates message by language, floor, room class, and urgency.</li>
+              <li>Backend pushes content to TV middleware and mobile notification providers.</li>
+              <li>Room-level delivery acknowledgments are logged in Postgres.</li>
+              <li>Escalation path triggers if delivery falls below threshold.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="system-track">
+          <h4>Pilot Scope</h4>
+          <div class="track-body">
+            <ul class="plan">
+              <li>Start with 1 floor and two message types: service announcement and safety advisory.</li>
+              <li>Success metric: 95 percent delivery in 3 minutes.</li>
+              <li>Export compliance report to replace manual paper distribution logs.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout warn">
+          Respect safety, privacy, and hotel policy requirements. Security and auditability are part of the product.
+        </div>
+      </section>
+
+      <section class="section" id="systems">
+        <div class="section-head">
+          <div class="section-num">10</div>
+          <h2>System Tracks to Master</h2>
+        </div>
+        <div class="system-track">
+          <h4>Fire Panel Event Intelligence</h4>
+          <div class="track-body"><ul class="plan"><li>Ingest authorized panel events and annotate with location metadata.</li><li>Build timeline view and post-event report generation.</li><li>Integrate with alert channels for duty staff confirmation.</li></ul></div>
+        </div>
+        <div class="system-track">
+          <h4>Generator Management</h4>
+          <div class="track-body"><ul class="plan"><li>Track runtime, load, fuel trends, and alarm states.</li><li>Predict service windows and automate maintenance reminders.</li><li>Provide executive view for uptime risk and operational cost.</li></ul></div>
+        </div>
+        <div class="system-track">
+          <h4>Building Management Overlay</h4>
+          <div class="track-body"><ul class="plan"><li>Supervise HVAC and environmental states via edge gateways.</li><li>Implement policy-based control and anomaly alerts.</li><li>Create occupancy-informed control routines for efficiency.</li></ul></div>
+        </div>
+        <div class="system-track">
+          <h4>Constrained Autopilot Routines</h4>
+          <div class="track-body"><ul class="plan"><li>Define strict boundaries and emergency stop logic.</li><li>Implement simulation-first testing and shadow deployment.</li><li>Document safety case and review logs for every release.</li></ul></div>
+        </div>
+      </section>
+
+      <section class="section" id="money">
+        <div class="section-head">
+          <div class="section-num">11</div>
+          <h2>Wealth Path While Enjoying the Work</h2>
+        </div>
+        <ul class="plan">
+          <li>Income Stream 1: architecture and implementation services for mission-critical systems.</li>
+          <li>Income Stream 2: subscription support and monitoring for deployed systems.</li>
+          <li>Income Stream 3: licensing of reusable modules and integration kits.</li>
+          <li>Income Stream 4: practical training for teams adopting embedded-plus-systems workflows.</li>
+          <li>Compounding Rule: convert fixed percentage of profits into long-term investments every month.</li>
+        </ul>
+        <div class="callout ok">A millionaire path is built from repeatable value, recurring revenue, and disciplined capital allocation.</div>
+      </section>
+
+      <section class="section" id="scorecard">
+        <div class="section-head">
+          <div class="section-num">12</div>
+          <h2>Monthly Scorecard (Non-Negotiable)</h2>
+        </div>
+        <p>Measure what you built, shipped, learned, and monetized.</p>
+        <div class="score">
+          <table>
+            <thead><tr><th>Metric</th><th>Target</th><th>Pass Rule</th></tr></thead>
+            <tbody>
+              <tr><td>Build Output</td><td>4 meaningful features</td><td>At least one feature reaches demo-ready state</td></tr>
+              <tr><td>Reliability Work</td><td>2 failure tests weekly</td><td>Documented recovery for each failure mode</td></tr>
+              <tr><td>Learning Depth</td><td>15 focused hours</td><td>Notes plus one practical implementation</td></tr>
+              <tr><td>Business Motion</td><td>4 outreach actions</td><td>One concrete opportunity advanced</td></tr>
+              <tr><td>Revenue Quality</td><td>30 percent recurring</td><td>Recurring share does not decline</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="pledge">
+        <div class="section-head">
+          <div class="section-num">13</div>
+          <h2>Builder's Pledge</h2>
+        </div>
+        <p>
+          I will build every day, even in small steps. I will turn ideas into deployed systems and measured outcomes.
+          I will keep my standards high: safety, reliability, integrity, and clarity. I will keep learning, keep shipping,
+          and keep compounding. I will enjoy the process while building a life and career with real impact.
+        </p>
+        <div class="footer">code::core | Bringing It All Together to Build and Shake the World</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var sections = document.querySelectorAll('.section[id]');
+      var links = document.querySelectorAll('.nav-link');
+
+      if (!('IntersectionObserver' in window)) return;
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            links.forEach(function (link) {
+              var active = link.getAttribute('href') === '#' + entry.target.id;
+              link.classList.toggle('active', active);
+            });
+          }
+        });
+      }, { rootMargin: '-25% 0px -60% 0px' });
+
+      sections.forEach(function (section) { observer.observe(section); });
+    }());
+  </script>
+</body>
+</html>

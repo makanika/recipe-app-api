@@ -209,3 +209,26 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: Developer education and documentation
+
+## 2026-05-03 10:22 - updated_playbook
+
+- Commit: 319f5fb
+- Author: makanika
+- Date: 2026-05-03T10:22:23+03:00
+- Delta: +23 / -0
+- Chapter Tags: Documentation, Teaching
+- Changed Files:
+  - M	docs/PLAYBOOK.md
+- Teaching Focus:
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+  - Controlled change: updates should improve reliability, maintainability, or clarity.
+- Teaching Narrative:
+  - Story: This commit advances Developer education and documentation through a moderate and visible delta and centers on 'updated_playbook'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: Documentation is architecture: clear explanations reduce onboarding and debugging time.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
