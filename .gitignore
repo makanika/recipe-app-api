@@ -203,6 +203,9 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Auto-generated git playbook state
+.playbook-state
+
 # Ruff stuff:
 .ruff_cache/
 

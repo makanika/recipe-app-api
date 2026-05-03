@@ -1,0 +1,1876 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Django on Docker — Master Build Manual | code::core</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── CODE & CORE BRAND TOKENS ─────────────────────────── */
+    :root {
+      /* Primary brand */
+      --navy:       #0D2340;
+      --navy-dark:  #0D2340;
+      --blue-800:   #14305A;
+      --blue-700:   #1E4D8C;
+      --blue-500:   #3970B8;
+      --blue-300:   #7AAAD6;
+      --blue-50:    #EAF0FA;
+      --gold:       #B8922A;
+      --ivory:      #F9F6EF;
+      /* Neutrals */
+      --ink:        #1C1A16;
+      --ink-mid:    #3D3A32;
+      --ink-soft:   #6B6760;
+      --rule:       #D5CFC3;
+      --parch:      #EDE8DC;
+      /* Semantic */
+      --green:      #2A6B43;
+      --green-bg:   #EAF3EE;
+      --amber:      #9A5B0A;
+      --amber-bg:   #FDF3E3;
+      --red:        #8C2020;
+      --red-bg:     #FAEAEA;
+      --info-bg:    #EAF0FA;
+      /* Radii */
+      --r:  10px;
+      --rs: 6px;
+      --rl: 16px;
+    }
+
+    /* ── RESET ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    /* ── BASE ─────────────────────────────────────────────── */
+    body {
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.85;
+    }
+    ::selection { background: var(--navy); color: var(--ivory); }
+
+    /* ── SCROLLBAR ────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--ivory); }
+    ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+    /* ── LAYOUT ───────────────────────────────────────────── */
+    .wrapper { display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ──────────────────────────────────────────── */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--navy);
+      padding: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar::-webkit-scrollbar-track { background: var(--navy); }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--blue-700); }
+
+    .sidebar-brand {
+      padding: 2rem 1.75rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .brand-wordmark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--ivory);
+      margin-bottom: .25rem;
+    }
+    .brand-wordmark span { color: var(--gold); }
+    .brand-sub {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--blue-300);
+    }
+
+    .nav-group { padding: 1.25rem 1.75rem .5rem; }
+    .nav-group-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--blue-300);
+      margin-bottom: .6rem;
+      opacity: .7;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .45rem .65rem;
+      border-radius: var(--rs);
+      color: rgba(255,255,255,.65);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 400;
+      transition: all .15s;
+      margin-bottom: 2px;
+    }
+    .nav-link:hover { background: rgba(255,255,255,.08); color: var(--ivory); }
+    .nav-link.active {
+      background: var(--gold);
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .nav-num {
+      width: 18px; height: 18px; min-width: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.5);
+    }
+    .nav-link.active .nav-num { background: rgba(13,35,64,.2); color: var(--navy); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1.25rem 1.75rem;
+      border-top: 1px solid rgba(255,255,255,.08);
+      font-size: 11px;
+      color: rgba(255,255,255,.3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── MAIN ─────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 3.5rem 5rem 5rem;
+      max-width: 900px;
+    }
+
+    /* ── HERO ─────────────────────────────────────────────── */
+    .hero {
+      background: var(--navy);
+      border-radius: var(--rl);
+      padding: 3.5rem;
+      margin-bottom: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(184,146,42,.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      bottom: -40px; left: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(30,77,140,.4) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 52px;
+      font-weight: 600;
+      line-height: 1.05;
+      color: var(--ivory);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero-desc {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.85;
+      color: rgba(249,246,239,.7);
+      max-width: 540px;
+      margin-bottom: 0;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 0;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .hero-stat {
+      flex: 1;
+      padding-right: 2rem;
+      border-right: 1px solid rgba(255,255,255,.1);
+      margin-right: 2rem;
+    }
+    .hero-stat:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+    .stat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: .2rem;
+    }
+    .stat-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(249,246,239,.4);
+    }
+
+    /* ── SECTION ──────────────────────────────────────────── */
+    .section { margin-bottom: 4rem; scroll-margin-top: 2rem; }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--parch);
+    }
+    .section-num-badge {
+      width: 40px; height: 40px; min-width: 40px;
+      background: var(--navy);
+      color: var(--ivory);
+      border-radius: var(--rs);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 700;
+      margin-top: 3px;
+    }
+    .section-title-group {}
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+    .section-subtitle {
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--ink-soft);
+      margin-top: .2rem;
+    }
+
+    /* ── CONCEPT TEACHING BLOCK ───────────────────────────── */
+    .concept {
+      background: var(--blue-50);
+      border: 1px solid var(--blue-300);
+      border-left: 4px solid var(--blue-700);
+      border-radius: var(--r);
+      padding: 1.5rem 1.75rem;
+      margin: 1.5rem 0;
+    }
+    .concept-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--blue-700);
+      margin-bottom: .6rem;
+    }
+    .concept h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: .5rem;
+    }
+    .concept p {
+      font-size: 14px;
+      color: var(--ink-mid);
+      line-height: 1.85;
+      margin-bottom: .5rem;
+    }
+    .concept p:last-child { margin-bottom: 0; }
+
+    /* ── ANALOGY BLOCK ────────────────────────────────────── */
+    .analogy {
+      background: var(--parch);
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--gold);
+      border-radius: var(--r);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .analogy-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .4rem;
+    }
+    .analogy p {
+      font-size: 14px;
+      font-style: italic;
+      color: var(--ink-mid);
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    /* ── CALLOUT ──────────────────────────────────────────── */
+    .callout {
+      display: flex;
+      gap: 1rem;
+      padding: 1.1rem 1.4rem;
+      border-radius: var(--r);
+      margin: 1.25rem 0;
+      border-left: 4px solid;
+    }
+    .callout-info    { background: var(--info-bg);  border-color: var(--blue-500); }
+    .callout-warn    { background: var(--amber-bg); border-color: var(--amber);    }
+    .callout-success { background: var(--green-bg); border-color: var(--green);    }
+    .callout-danger  { background: var(--red-bg);   border-color: var(--red);      }
+    .callout-icon { font-size: 16px; min-width: 20px; margin-top: 2px; }
+    .callout-tag {
+      font-family: 'Jost', sans-serif;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .15em; text-transform: uppercase;
+      margin-bottom: .2rem;
+    }
+    .callout-info    .callout-tag { color: var(--blue-700); }
+    .callout-warn    .callout-tag { color: var(--amber);    }
+    .callout-success .callout-tag { color: var(--green);    }
+    .callout-danger  .callout-tag { color: var(--red);      }
+    .callout p { font-size: 14px; color: var(--ink-mid); line-height: 1.75; margin: 0; }
+    .callout strong { color: var(--ink); font-weight: 600; }
+
+    /* ── CODE BLOCK ───────────────────────────────────────── */
+    .code-block {
+      background: var(--navy);
+      border-radius: var(--r);
+      overflow: hidden;
+      margin: 1.5rem 0;
+      box-shadow: 0 4px 24px rgba(13,35,64,.12);
+    }
+    .code-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .65rem 1.25rem;
+      background: var(--blue-800);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .code-file {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--blue-300);
+    }
+    .code-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+    .code-badge {
+      font-family: 'Jost', sans-serif;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.35);
+      padding: .2rem .55rem;
+      border-radius: 999px;
+    }
+    pre {
+      padding: 1.5rem 1.75rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.75;
+      color: #C9D1D9;
+    }
+    code { font-family: inherit; }
+
+    /* syntax */
+    .k  { color: #D2A8FF; }
+    .s  { color: #A5D6A7; }
+    .c  { color: #6B6760; font-style: italic; }
+    .v  { color: #79C0FF; }
+    .n  { color: #F0A868; }
+    .f  { color: var(--gold); }
+    .o  { color: #FF7B72; }
+
+    :not(pre) > code {
+      background: var(--parch);
+      border: 1px solid var(--rule);
+      color: var(--blue-700);
+      padding: .12em .4em;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      font-weight: 500;
+    }
+
+    /* ── ANNOTATED LINE ───────────────────────────────────── */
+    .annotated-code { display: flex; flex-direction: column; }
+    .ann-line { display: flex; gap: 1.5rem; margin: .5rem 0; align-items: flex-start; }
+    .ann-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      background: var(--navy);
+      color: #C9D1D9;
+      padding: .5rem .9rem;
+      border-radius: var(--rs);
+      min-width: 280px;
+      line-height: 1.6;
+    }
+    .ann-text {
+      font-size: 13.5px;
+      color: var(--ink-mid);
+      padding-top: .4rem;
+      line-height: 1.65;
+      flex: 1;
+    }
+    .ann-text strong { color: var(--navy); font-weight: 600; }
+
+    /* ── STEP CARD ────────────────────────────────────────── */
+    .step-list { display: flex; flex-direction: column; gap: .85rem; }
+    .step-card {
+      display: flex;
+      gap: 1.25rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: 1.25rem 1.5rem;
+      transition: box-shadow .15s;
+    }
+    .step-card:hover { box-shadow: 0 4px 16px rgba(13,35,64,.07); }
+    .step-circle {
+      width: 32px; height: 32px; min-width: 32px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--ivory);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px;
+    }
+    .step-card.gold .step-circle { background: var(--gold); }
+    .step-card.blue .step-circle { background: var(--blue-700); }
+    .step-body {}
+    .step-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; font-weight: 600;
+      color: var(--navy);
+      margin-bottom: .3rem;
+    }
+    .step-desc {
+      font-size: 14px;
+      color: var(--ink-soft);
+      line-height: 1.75;
+      margin-bottom: .75rem;
+    }
+    .step-desc:last-child { margin-bottom: 0; }
+    .step-why {
+      font-size: 13px;
+      color: var(--blue-700);
+      background: var(--blue-50);
+      border-radius: var(--rs);
+      padding: .6rem .9rem;
+      line-height: 1.65;
+    }
+    .step-why strong { font-weight: 600; }
+
+    /* ── COMPARE GRID ─────────────────────────────────────── */
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    .compare-card {
+      border-radius: var(--r);
+      padding: 1.5rem;
+      border: 1px solid;
+    }
+    .compare-card.bad  { background: var(--red-bg);   border-color: #E8B4B4; }
+    .compare-card.good { background: var(--green-bg); border-color: #B4D6C0; }
+    .compare-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .15em; text-transform: uppercase;
+      margin-bottom: .6rem;
+    }
+    .compare-card.bad  .compare-label { color: var(--red);   }
+    .compare-card.good .compare-label { color: var(--green); }
+    .compare-card h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px; font-weight: 600;
+      margin-bottom: .4rem;
+    }
+    .compare-card.bad  h4 { color: var(--red);   }
+    .compare-card.good h4 { color: var(--green); }
+    .compare-card p { font-size: 13.5px; color: var(--ink-mid); line-height: 1.7; margin: 0; }
+
+    /* ── CARD ─────────────────────────────────────────────── */
+    .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: 1.5rem;
+    }
+    .card-icon { font-size: 22px; margin-bottom: .75rem; }
+    .card h4 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; font-weight: 600;
+      color: var(--navy);
+      margin-bottom: .4rem;
+    }
+    .card p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.75; margin: 0; }
+
+    /* ── TABLE ────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 1.5rem 0; border-radius: var(--r); border: 1px solid var(--rule); }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    thead { background: var(--navy); }
+    th {
+      color: rgba(249,246,239,.7);
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      padding: .85rem 1.25rem;
+      text-align: left;
+    }
+    td {
+      padding: .85rem 1.25rem;
+      border-bottom: 1px solid var(--parch);
+      color: var(--ink-mid);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: rgba(237,232,220,.25); }
+    td strong { color: var(--ink); font-weight: 600; }
+
+    /* ── BADGE ────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: .2rem .6rem;
+      border-radius: 999px;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .08em;
+    }
+    .badge-navy   { background: var(--navy);   color: var(--ivory); }
+    .badge-gold   { background: var(--gold);   color: #fff; }
+    .badge-green  { background: var(--green-bg); color: var(--green); border: 1px solid #B4D6C0; }
+    .badge-blue   { background: var(--blue-50);  color: var(--blue-700); border: 1px solid var(--blue-300); }
+    .badge-amber  { background: var(--amber-bg); color: var(--amber); border: 1px solid #F2CDA0; }
+
+    /* ── RULE ─────────────────────────────────────────────── */
+    .rule { border: none; border-top: 2px solid var(--parch); margin: 3rem 0; }
+
+    /* ── BODY TEXT ────────────────────────────────────────── */
+    p { color: var(--ink-mid); margin-bottom: .9rem; line-height: 1.85; }
+    p:last-child { margin-bottom: 0; }
+    h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 600;
+      color: var(--navy);
+      margin: 2rem 0 .75rem;
+    }
+    h3 {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 1.5rem 0 .6rem;
+    }
+    ul, ol { padding-left: 1.5rem; color: var(--ink-soft); font-size: 14px; line-height: 1.8; }
+    li { margin-bottom: .4rem; }
+
+    /* ── FOOTER ───────────────────────────────────────────── */
+    .footer {
+      margin-top: 5rem;
+      padding: 2rem 0 1rem;
+      border-top: 2px solid var(--parch);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-brand {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 700;
+      color: var(--navy);
+    }
+    .footer-brand span { color: var(--gold); }
+    .footer p { font-size: 12px; color: var(--ink-soft); margin: 0; }
+
+    /* ── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width: 960px) {
+      .sidebar { display: none; }
+      .main { padding: 2rem 1.5rem; }
+      .card-grid, .compare { grid-template-columns: 1fr; }
+      .hero { padding: 2.5rem 2rem; }
+      .hero h1 { font-size: 38px; }
+      .ann-line { flex-direction: column; gap: .5rem; }
+      .ann-code { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-wordmark">code<span>::</span>core</div>
+      <div class="brand-sub">Django on Docker</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Getting Started</div>
+      <a href="#overview"    class="nav-link active"><span class="nav-num">01</span> Overview &amp; Philosophy</a>
+      <a href="#prerequisites" class="nav-link"><span class="nav-num">02</span> Prerequisites</a>
+      <a href="#structure"     class="nav-link"><span class="nav-num">03</span> Project Structure</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Core Files</div>
+      <a href="#dockerfile"    class="nav-link"><span class="nav-num">04</span> Dockerfile Deep-Dive</a>
+      <a href="#requirements"  class="nav-link"><span class="nav-num">05</span> Requirements Files</a>
+      <a href="#compose"       class="nav-link"><span class="nav-num">06</span> Docker Compose</a>
+      <a href="#dockerignore"  class="nav-link"><span class="nav-num">07</span> .dockerignore</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Build &amp; Deploy</div>
+      <a href="#django-setup"  class="nav-link"><span class="nav-num">08</span> Django Project Setup</a>
+      <a href="#cicd"          class="nav-link"><span class="nav-num">09</span> CI/CD with GitHub Actions</a>
+      <a href="#commands"      class="nav-link"><span class="nav-num">10</span> Command Reference</a>
+      <a href="#troubleshoot"  class="nav-link"><span class="nav-num">11</span> Troubleshooting Guide</a>
+    </div>
+
+    <div class="sidebar-footer">codeandcore.dev &copy; 2026</div>
+  </nav>
+
+  <!-- ── MAIN ──────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-eyebrow">Master Build Manual &mdash; v1.0</div>
+      <h1>Django on <em>Docker</em><br/>The Complete Guide</h1>
+      <p class="hero-desc">
+        A fully annotated, step-by-step teaching manual for building production-ready Django REST APIs
+        containerised with Docker. Every command is explained. Every decision is justified.
+        Built by <strong style="color:var(--gold);font-weight:600">code::core</strong>.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="stat-val">11</div>
+          <div class="stat-label">Chapters</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-val">Python 3.9</div>
+          <div class="stat-label">Runtime</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-val">Alpine</div>
+          <div class="stat-label">Base Image</div>
+        </div>
+        <div class="hero-stat">
+          <div class="stat-val">GitHub CI</div>
+          <div class="stat-label">Automation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 1. OVERVIEW ═══════════════════════════════════════ -->
+    <section class="section" id="overview">
+      <div class="section-header">
+        <div class="section-num-badge">01</div>
+        <div class="section-title-group">
+          <div class="section-title">Overview &amp; Philosophy</div>
+          <div class="section-subtitle">Why Docker changes everything about how you build software</div>
+        </div>
+      </div>
+
+      <p>
+        Before Docker, deploying a Django application meant wrestling with Python versions, OS-level
+        library differences, and the classic nightmare: <em>"it works on my machine, but not in
+        production."</em> Docker solves this by packaging your entire application — Python runtime,
+        dependencies, OS libraries — into a single portable unit called a <strong>container</strong>.
+      </p>
+
+      <div class="concept">
+        <div class="concept-label">Core Concept</div>
+        <h3>What is a Container?</h3>
+        <p>
+          A container is a lightweight, isolated process that runs on top of your host operating system.
+          It is <em>not</em> a virtual machine — there is no separate OS kernel. Instead, it shares your
+          host OS kernel but runs in an isolated filesystem, process space, and network. This makes it
+          extremely fast to start (milliseconds) and very small (megabytes, not gigabytes).
+        </p>
+        <p>
+          Think of it as a shipping container: before shipping containers, every cargo ship was loaded
+          differently, every port had different equipment. After standardisation, one container fits every
+          ship, every crane, every truck. Docker does the same for software environments.
+        </p>
+      </div>
+
+      <div class="analogy">
+        <div class="analogy-label">&#128218; Mental Model</div>
+        <p>
+          A <strong>Dockerfile</strong> is the recipe. A <strong>Docker image</strong> is the baked cake.
+          A <strong>Docker container</strong> is a slice of that cake being served. You bake once,
+          serve anywhere &mdash; locally, in CI, in production &mdash; and every slice is identical.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card bad">
+          <div class="compare-label">&#10005; Without Docker</div>
+          <h4>Environment Chaos</h4>
+          <p>Developer A has Python 3.9, Developer B has 3.11. Production runs 3.8. A library works on
+          macOS but fails on Linux. Every new developer spends a day setting up their environment.
+          Bugs exist only in production.</p>
+        </div>
+        <div class="compare-card good">
+          <div class="compare-label">&#10003; With Docker</div>
+          <h4>Reproducible Environments</h4>
+          <p>Every developer, CI server, and production host runs the exact same image. One command to
+          start. Onboarding takes minutes. "Works on my machine" becomes "works in the container"
+          &mdash; and the container runs everywhere.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-icon">&#128218;</div>
+        <div>
+          <div class="callout-tag">How to use this manual</div>
+          <p>Read each chapter in order the first time to understand the <em>why</em> behind every
+          decision. On future projects, use it as a reference — jump to any chapter and copy the
+          verified code blocks. Every mistake you can make has been documented in Chapter 11.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 2. PREREQUISITES ══════════════════════════════════ -->
+    <section class="section" id="prerequisites">
+      <div class="section-header">
+        <div class="section-num-badge">02</div>
+        <div class="section-title-group">
+          <div class="section-title">Prerequisites</div>
+          <div class="section-subtitle">Every tool you need and why you need it</div>
+        </div>
+      </div>
+
+      <p>
+        You do not need Python installed locally. You do not need Django installed locally.
+        That is the point. The only things you need on your host machine are the tools that
+        <em>manage</em> Docker, not the tools that <em>run</em> your application.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Tool</th><th>Why you need it</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Docker Desktop</strong></td>
+              <td>The Docker engine itself. Builds images and runs containers on your local machine. Also includes Docker Compose V2 built in.</td>
+              <td><span class="badge badge-navy">Required</span></td>
+            </tr>
+            <tr>
+              <td><strong>Git</strong></td>
+              <td>Version control. Required to push code to GitHub and trigger the CI pipeline. Also used by Docker during some multi-stage builds.</td>
+              <td><span class="badge badge-navy">Required</span></td>
+            </tr>
+            <tr>
+              <td><strong>GitHub Account</strong></td>
+              <td>Hosts your code repository and runs your automated tests via GitHub Actions every time you push a commit.</td>
+              <td><span class="badge badge-navy">Required</span></td>
+            </tr>
+            <tr>
+              <td><strong>Docker Hub Account</strong></td>
+              <td>The public registry where Docker pulls base images from. Anonymous pulls are rate-limited; logging in from CI prevents build failures.</td>
+              <td><span class="badge badge-navy">Required</span></td>
+            </tr>
+            <tr>
+              <td><strong>VS Code</strong></td>
+              <td>The recommended editor. Install the Docker extension for container management and syntax highlighting inside Dockerfiles.</td>
+              <td><span class="badge badge-gold">Recommended</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="concept">
+        <div class="concept-label">Why no local Python?</div>
+        <h3>The Container is your Environment</h3>
+        <p>
+          A common beginner mistake is installing Python and Django locally and <em>also</em> using Docker.
+          This creates confusion: which Python runs your app? Which pip installs packages?
+        </p>
+        <p>
+          The rule is simple: <strong>your application never runs outside the container.</strong>
+          Every Django command — <code>migrate</code>, <code>test</code>, <code>startapp</code> —
+          is run <em>inside</em> a container. Your host machine is only used to invoke Docker commands.
+          This is covered fully in Chapter 8.
+        </p>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">&#9888;&#65039;</div>
+        <div>
+          <div class="callout-tag">Docker Hub Rate Limits</div>
+          <p><strong>Anonymous image pulls are capped at 100 per 6 hours per IP.</strong> In CI
+          environments, multiple pipelines running in parallel from shared GitHub-hosted runners will
+          share the same IP and hit this limit. Always authenticate with Docker Hub in your CI pipeline
+          (Chapter 9 shows exactly how to do this).</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 3. PROJECT STRUCTURE ══════════════════════════════ -->
+    <section class="section" id="structure">
+      <div class="section-header">
+        <div class="section-num-badge">03</div>
+        <div class="section-title-group">
+          <div class="section-title">Project Structure</div>
+          <div class="section-subtitle">The layout every Docker-Django project must follow</div>
+        </div>
+      </div>
+
+      <p>
+        Consistency in project layout is not a matter of preference — it is a requirement when
+        Docker is involved. The Dockerfile contains explicit <code>COPY</code> instructions that
+        reference exact paths. If those paths don't exist, the build fails.
+      </p>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>Project Root Layout</div>
+          <div class="code-badge">directory tree</div>
+        </div>
+        <pre><code>recipe-app-api/
+├── <span class="v">app/</span>                    <span class="c"># ALL Django code lives here — nothing outside</span>
+│   ├── manage.py           <span class="c"># Django management entry point</span>
+│   └── app/                <span class="c"># Inner app dir created by startproject</span>
+│       ├── settings.py
+│       ├── urls.py
+│       └── wsgi.py
+│
+├── <span class="v">.github/workflows/</span>
+│   └── <span class="s">checks.yml</span>          <span class="c"># GitHub Actions: auto-test on every push</span>
+│
+├── <span class="s">Dockerfile</span>              <span class="c"># Blueprint for the container image</span>
+├── <span class="s">docker-compose.yml</span>      <span class="c"># Dev orchestration — how to run locally</span>
+├── <span class="s">.dockerignore</span>           <span class="c"># Exclude files from the build context</span>
+├── <span class="s">requirements.txt</span>        <span class="c"># Production Python packages</span>
+└── <span class="s">requirements.dev.txt</span>    <span class="c"># Dev-only packages (testing, linting)</span></code></pre>
+      </div>
+
+      <h2>Why <code>app/</code> is a separate directory</h2>
+      <p>
+        The <code>app/</code> directory is the boundary between your code and Docker's build
+        context. The Dockerfile copies <em>only</em> this directory into the image:
+        <code>COPY ./app /app</code>. This means files at the project root — your
+        <code>README.md</code>, your CI config, your local notes — never end up in the
+        production image. Smaller images. Cleaner separation.
+      </p>
+
+      <div class="callout callout-danger">
+        <div class="callout-icon">&#128680;</div>
+        <div>
+          <div class="callout-tag">Critical: app/ must exist before building</div>
+          <p>The <code>COPY ./app /app</code> instruction in the Dockerfile will fail with a
+          <strong>build error</strong> if the <code>app/</code> directory is missing — even if it
+          is empty. Create it immediately when setting up a new project:
+          <code>mkdir app</code>. You encountered this exact error today.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 4. DOCKERFILE ════════════════════════════════════ -->
+    <section class="section" id="dockerfile">
+      <div class="section-header">
+        <div class="section-num-badge">04</div>
+        <div class="section-title-group">
+          <div class="section-title">Dockerfile Deep-Dive</div>
+          <div class="section-subtitle">Every instruction explained — the what, the why, and the how</div>
+        </div>
+      </div>
+
+      <p>
+        A Dockerfile is a sequence of instructions Docker executes top-to-bottom to build an image.
+        Each instruction creates a new read-only <strong>layer</strong>. Layers are cached
+        independently — understanding this cache is the difference between 2-second rebuilds
+        and 3-minute rebuilds.
+      </p>
+
+      <div class="concept">
+        <div class="concept-label">Core Concept</div>
+        <h3>Docker Layer Caching</h3>
+        <p>
+          Docker reuses a cached layer if nothing above it has changed. Once a layer is invalidated
+          (e.g. a file it depends on changed), all subsequent layers are also invalidated and
+          re-executed. This is why the order of instructions in a Dockerfile matters enormously.
+        </p>
+        <p>
+          <strong>Rule of thumb:</strong> put things that change least frequently at the top,
+          things that change most frequently at the bottom. Dependencies change less often than
+          source code, so always copy and install requirements <em>before</em> copying your app code.
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>Dockerfile</div>
+          <div class="code-badge">dockerfile</div>
+        </div>
+        <pre><code><span class="k">FROM</span> <span class="s">python:3.9-alpine3.13</span>
+<span class="k">LABEL</span> maintainer=<span class="s">"CODEANDCORE.COM"</span>
+
+<span class="k">ENV</span> PYTHONUNBUFFERED=<span class="n">1</span>
+
+<span class="k">COPY</span> ./requirements.txt /tmp/requirements.txt
+<span class="k">COPY</span> ./requirements.dev.txt /tmp/requirements.dev.txt
+<span class="k">COPY</span> ./app /app
+
+<span class="k">WORKDIR</span> /app
+<span class="k">EXPOSE</span> <span class="n">8000</span>
+
+<span class="k">ARG</span> Dev=<span class="s">false</span>
+
+<span class="k">RUN</span> python -m venv /py &amp;&amp; \
+    /py/bin/pip install --upgrade pip &amp;&amp; \
+    /py/bin/pip install -r /tmp/requirements.txt &amp;&amp; \
+    if [ <span class="s">"$Dev"</span> = <span class="s">"true"</span> ]; then \
+        /py/bin/pip install -r /tmp/requirements.dev.txt; \
+    fi &amp;&amp; \
+    rm -rf /tmp &amp;&amp; \
+    adduser \
+        --disabled-password \
+        --no-create-home \
+        django-user
+
+<span class="k">ENV</span> PATH=<span class="s">"/py/bin:$PATH"</span>
+
+<span class="k">USER</span> django-user</code></pre>
+      </div>
+
+      <h2>Line-by-line explanation</h2>
+
+      <div class="step-list">
+        <div class="step-card">
+          <div class="step-circle">1</div>
+          <div class="step-body">
+            <div class="step-title">FROM python:3.9-alpine3.13</div>
+            <div class="step-desc">
+              This is the base image — the starting point for your own image. We are using the official
+              Python 3.9 image built on top of Alpine Linux 3.13. Every subsequent instruction adds
+              layers on top of this.
+            </div>
+            <div class="step-why">
+              <strong>Why Alpine?</strong> The standard <code>python:3.9</code> image is ~900MB.
+              The Alpine variant is ~45MB. Smaller images pull faster in CI, deploy faster,
+              and have a smaller attack surface. Alpine is a minimal, security-focused Linux
+              distribution — perfect for production containers.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card gold">
+          <div class="step-circle">2</div>
+          <div class="step-body">
+            <div class="step-title">ENV PYTHONUNBUFFERED=1</div>
+            <div class="step-desc">
+              By default, Python buffers its output — it holds log messages in memory and flushes
+              them in batches. Inside Docker, this means your application logs may never appear
+              in <code>docker compose logs</code> if the process crashes.
+            </div>
+            <div class="step-why">
+              <strong>Why this matters:</strong> Setting <code>PYTHONUNBUFFERED=1</code> forces
+              Python to write directly to stdout/stderr without buffering. Every print statement
+              and log message appears immediately in the container logs. This is critical for
+              debugging in production.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">3</div>
+          <div class="step-body">
+            <div class="step-title">COPY requirements before COPY app</div>
+            <div class="step-desc">
+              We copy <code>requirements.txt</code> and <code>requirements.dev.txt</code>
+              <em>before</em> copying <code>./app</code>. This is intentional layer caching
+              optimisation.
+            </div>
+            <div class="step-why">
+              <strong>The cache trick:</strong> When you change a Python file in <code>app/</code>,
+              Docker invalidates the <code>COPY ./app</code> layer and everything below it. But the
+              <code>COPY ./requirements.txt</code> layer above it is unchanged, so the pip install
+              step is still cached. Without this ordering, every code change would reinstall all
+              packages — turning a 3-second rebuild into a 3-minute one.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card blue">
+          <div class="step-circle">4</div>
+          <div class="step-body">
+            <div class="step-title">ARG Dev=false</div>
+            <div class="step-desc">
+              <code>ARG</code> declares a build-time variable. When you run
+              <code>docker compose build</code> locally, Compose passes <code>Dev=true</code>
+              via the <code>args</code> block in <code>docker-compose.yml</code>.
+              In CI and production, it defaults to <code>false</code>.
+            </div>
+            <div class="step-why">
+              <strong>Why separate dev dependencies?</strong> Tools like <code>flake8</code>
+              (linter) and test runners are only needed during development and CI. Including them
+              in production images adds unnecessary size and potential vulnerabilities. The
+              <code>if [ "$Dev" = "true" ]</code> shell conditional inside the <code>RUN</code>
+              instruction installs them only when explicitly requested.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">5</div>
+          <div class="step-body">
+            <div class="step-title">python -m venv /py &mdash; Virtual Environment Inside Docker</div>
+            <div class="step-desc">
+              We create a virtual environment at <code>/py</code> even though we are already inside
+              a container. Then we install all packages into <code>/py/bin/pip</code> rather than
+              the system pip.
+            </div>
+            <div class="step-why">
+              <strong>Why a venv inside a container?</strong> Alpine Linux has its own Python
+              installation used by system tools. Installing packages with system pip risks
+              overwriting system Python packages and breaking Alpine internals. The virtual
+              environment keeps your application packages completely isolated from the OS.
+              It also makes the setup explicit and reproducible.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card gold">
+          <div class="step-circle">6</div>
+          <div class="step-body">
+            <div class="step-title">rm -rf /tmp &mdash; Clean Up After Installing</div>
+            <div class="step-desc">
+              After pip installs the packages from <code>/tmp/requirements.txt</code>,
+              we delete the entire <code>/tmp</code> directory in the <em>same</em>
+              <code>RUN</code> instruction.
+            </div>
+            <div class="step-why">
+              <strong>Why in the same RUN?</strong> Each <code>RUN</code> creates a new layer.
+              If you deleted <code>/tmp</code> in a <em>separate</em> <code>RUN</code> instruction,
+              the files would still exist in the previous layer and be baked into the image.
+              Doing the cleanup in the same <code>RUN</code> means the files never persist to
+              any layer, keeping the image as small as possible.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card blue">
+          <div class="step-circle">7</div>
+          <div class="step-body">
+            <div class="step-title">adduser django-user &mdash; The Principle of Least Privilege</div>
+            <div class="step-desc">
+              By default, Docker containers run as <code>root</code>. We create a dedicated
+              <code>django-user</code> with no password (<code>--disabled-password</code>)
+              and no home directory (<code>--no-create-home</code>), then switch to it
+              with <code>USER django-user</code>.
+            </div>
+            <div class="step-why">
+              <strong>Security:</strong> If an attacker exploits a vulnerability in your Django
+              application, the process running as <code>root</code> would have full control
+              over the container and potentially the host. Running as a non-root user limits
+              the blast radius of any security breach. This is a required practice in any
+              production container setup.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">8</div>
+          <div class="step-body">
+            <div class="step-title">ENV PATH="/py/bin:$PATH"</div>
+            <div class="step-desc">
+              This adds the virtual environment's <code>bin</code> directory to the system
+              <code>PATH</code>. After this line, running <code>python</code> or
+              <code>django-admin</code> in the container automatically uses the venv versions.
+            </div>
+            <div class="step-why">
+              <strong>Why this must come after RUN:</strong> The <code>PATH</code> <code>ENV</code>
+              is set <em>after</em> the <code>RUN</code> block so that the venv is fully created
+              before we try to use it. The <code>ENV</code> persists into the running container,
+              so every subsequent <code>docker compose run</code> command uses the venv automatically.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 5. REQUIREMENTS ═══════════════════════════════════ -->
+    <section class="section" id="requirements">
+      <div class="section-header">
+        <div class="section-num-badge">05</div>
+        <div class="section-title-group">
+          <div class="section-title">Requirements Files</div>
+          <div class="section-subtitle">Pinning dependencies for reproducible, safe builds</div>
+        </div>
+      </div>
+
+      <p>
+        Python package management is one of the most common sources of broken builds.
+        A package that works today may release a breaking change tomorrow. The solution is
+        <strong>version pinning</strong> — specifying exactly which versions your application
+        requires.
+      </p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">&#128230;</div>
+          <h4>requirements.txt</h4>
+          <p>Production dependencies only. Installed in every build. Kept as lean as possible — every unnecessary package is a potential security vulnerability.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">&#128295;</div>
+          <h4>requirements.dev.txt</h4>
+          <p>Development and CI tools only. Installed when <code>Dev=true</code>. Contains linters, test runners, and debug tools that must never reach production.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>requirements.txt &mdash; Production</div>
+          <div class="code-badge">pip</div>
+        </div>
+        <pre><code><span class="c"># Production dependencies</span>
+<span class="c"># Lower bound: minimum version with features we need</span>
+<span class="c"># Upper bound: prevents accidental breaking upgrades</span>
+Django&gt;=<span class="n">3.2.3</span>,&lt;<span class="n">4.0</span>
+djangorestframework&gt;=<span class="n">3.0</span>,&lt;<span class="n">4.0</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>requirements.dev.txt &mdash; Development &amp; CI only</div>
+          <div class="code-badge">pip</div>
+        </div>
+        <pre><code><span class="c"># Dev &amp; CI tools — never installed in production</span>
+flake8&gt;=<span class="n">3.9.2</span>,&lt;<span class="n">4.0.0</span>   <span class="c"># PEP 8 linter</span></code></pre>
+      </div>
+
+      <div class="concept">
+        <div class="concept-label">Version Ranges Explained</div>
+        <h3>Why &gt;=3.2.3,&lt;4.0 instead of ==3.2.3?</h3>
+        <p>
+          Pinning to an exact version (<code>==3.2.3</code>) is overly strict. It prevents you
+          from getting security patches in <code>3.2.4</code>, <code>3.2.5</code>, etc.
+        </p>
+        <p>
+          The range <code>&gt;=3.2.3,&lt;4.0</code> uses <strong>semantic versioning</strong>:
+          allow any patch release (bug fixes, security patches) and any minor release within
+          the major version, but block the next major version which may contain breaking changes.
+          This is the professional standard for production dependency management.
+        </p>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">&#9888;&#65039;</div>
+        <div>
+          <div class="callout-tag">After changing requirements</div>
+          <p>Run <code>docker compose build --no-cache</code> to force a complete rebuild.
+          The <code>--no-cache</code> flag ignores all cached layers, ensuring pip fetches the
+          latest versions within your specified ranges. Without it, Docker may use a stale
+          cached pip install layer.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 6. DOCKER COMPOSE ════════════════════════════════ -->
+    <section class="section" id="compose">
+      <div class="section-header">
+        <div class="section-num-badge">06</div>
+        <div class="section-title-group">
+          <div class="section-title">Docker Compose</div>
+          <div class="section-subtitle">Orchestrating your development environment with a single command</div>
+        </div>
+      </div>
+
+      <p>
+        <code>docker compose</code> is the tool for defining and running multi-service Docker
+        applications. Even with a single service, it is the right choice — it stores all your
+        run configuration (ports, volumes, commands, build arguments) in a version-controlled
+        YAML file so you never have to remember long <code>docker run</code> flags.
+      </p>
+
+      <div class="concept">
+        <div class="concept-label">Core Concept</div>
+        <h3>Compose V2 vs the old docker-compose</h3>
+        <p>
+          There are two generations of Docker Compose. The original standalone binary was
+          called <code>docker-compose</code> (with a hyphen). It was written in Python and
+          shipped separately. Docker Compose V2 is the modern rewrite in Go, built directly
+          into the Docker CLI as a plugin: <code>docker compose</code> (with a space).
+        </p>
+        <p>
+          <strong>On Ubuntu 24.04 (used by GitHub Actions), only V2 is pre-installed.</strong>
+          Using <code>docker-compose</code> in your CI workflow will fail with
+          "command not found". Always use <code>docker compose</code> (space) in all scripts,
+          Makefiles, and CI configuration files.
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>docker-compose.yml</div>
+          <div class="code-badge">yaml</div>
+        </div>
+        <pre><code><span class="c"># No 'version:' key — it is obsolete in Compose V2 and causes warnings</span>
+<span class="k">services:</span>
+  <span class="v">app:</span>
+    <span class="k">build:</span>
+      <span class="k">context:</span> <span class="s">.</span>            <span class="c"># Use current directory as build context</span>
+      <span class="k">args:</span>
+        - Dev=<span class="s">true</span>          <span class="c"># Pass ARG to Dockerfile — installs dev deps</span>
+    <span class="k">ports:</span>
+      - <span class="s">"8000:8000"</span>          <span class="c"># host_port:container_port</span>
+    <span class="k">volumes:</span>
+      - <span class="s">./app:/app</span>          <span class="c"># Mount local code into container</span>
+    <span class="k">command:</span> &gt;
+      sh -c <span class="s">"python manage.py migrate &amp;&amp;
+             python manage.py runserver 0.0.0.0:8000"</span></code></pre>
+      </div>
+
+      <h2>Key directives explained</h2>
+
+      <div class="step-list">
+        <div class="step-card">
+          <div class="step-circle">A</div>
+          <div class="step-body">
+            <div class="step-title">build.context: .</div>
+            <div class="step-desc">
+              Tells Compose where the build context is — the directory whose contents are
+              sent to the Docker daemon. The dot means the current directory (your project root).
+              This is also where Docker looks for the <code>Dockerfile</code>.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card gold">
+          <div class="step-circle">B</div>
+          <div class="step-body">
+            <div class="step-title">volumes: ./app:/app</div>
+            <div class="step-desc">
+              Mounts your local <code>./app</code> directory into the container at <code>/app</code>.
+              Any change you make to a file in <code>./app</code> on your host immediately appears
+              inside the running container — no rebuild required. This is how live code reloading
+              works with Django's development server.
+            </div>
+            <div class="step-why">
+              <strong>Important:</strong> Volumes only apply at runtime (<code>docker compose up</code>).
+              They do <em>not</em> affect the built image. The image always uses the code
+              copied during <code>docker compose build</code>. In production you would not use
+              a volume — the code is baked into the image itself.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card blue">
+          <div class="step-circle">C</div>
+          <div class="step-body">
+            <div class="step-title">command: sh -c "migrate &amp;&amp; runserver"</div>
+            <div class="step-desc">
+              This overrides the default <code>CMD</code> in the Dockerfile. On every
+              <code>docker compose up</code>, the container runs database migrations first
+              (applying any pending schema changes) and then starts the Django development server.
+            </div>
+            <div class="step-why">
+              <strong>Why migrate on startup?</strong> In development, you frequently add models
+              and create migrations. Having <code>migrate</code> run automatically means the
+              database schema is always up to date when you start the server. In production you
+              would run migrations as a separate step before deploying.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 7. DOCKERIGNORE ═══════════════════════════════════ -->
+    <section class="section" id="dockerignore">
+      <div class="section-header">
+        <div class="section-num-badge">07</div>
+        <div class="section-title-group">
+          <div class="section-title">.dockerignore</div>
+          <div class="section-subtitle">Controlling what enters the build context</div>
+        </div>
+      </div>
+
+      <p>
+        When you run <code>docker build .</code> or <code>docker compose build</code>, Docker
+        sends the entire project directory to the Docker daemon as the <strong>build context</strong>.
+        This happens <em>before</em> any <code>COPY</code> instruction runs. A large build context
+        means slow builds even if you only <code>COPY</code> a small subset of files.
+      </p>
+
+      <div class="concept">
+        <div class="concept-label">Core Concept</div>
+        <h3>The Build Context Transfer</h3>
+        <p>
+          When you run <code>docker build .</code>, the first thing Docker prints is something like
+          <em>"Sending build context to Docker daemon 4.5MB"</em>. That is every file in your
+          project folder being streamed to the Docker daemon over a socket. Without a
+          <code>.dockerignore</code>, this includes your <code>.git/</code> folder, test fixtures,
+          local database files, and everything else.
+        </p>
+        <p>
+          The <code>.dockerignore</code> file works exactly like <code>.gitignore</code> — it tells
+          Docker which files and directories to exclude from the build context. Less data transferred,
+          faster builds, and no accidental secrets baked into images.
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>.dockerignore</div>
+          <div class="code-badge">config</div>
+        </div>
+        <pre><code><span class="c"># Version control — never needed in the image</span>
+.git
+.gitignore
+
+<span class="c"># Documentation — excluded from the image</span>
+*.md
+index.html
+
+<span class="c"># Python cache files — rebuilt automatically inside the container</span>
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+
+<span class="c"># Local environment files — NEVER bake secrets into an image</span>
+.env
+.env.*
+*.env
+
+<span class="c"># Editor configuration</span>
+.vscode
+.idea
+
+<span class="c"># OS artifacts</span>
+.DS_Store
+Thumbs.db</code></pre>
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-icon">&#128680;</div>
+        <div>
+          <div class="callout-tag">Critical: The dot prefix is not optional</div>
+          <p>
+            The file <strong>must</strong> be named <code>.dockerignore</code> with a leading dot.
+            A file named <code>dockerignore</code> (no dot) is silently ignored by Docker —
+            your entire project directory will be sent as the build context and no files will
+            be excluded. This was one of the issues found in your project today.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout-warn">
+        <div class="callout-icon">&#128274;</div>
+        <div>
+          <div class="callout-tag">Security: Never include .env files in images</div>
+          <p>
+            If your <code>.env</code> file contains database passwords, API keys, or Django's
+            <code>SECRET_KEY</code> and it is copied into the image, those secrets become
+            visible to anyone who can pull the image from your registry. Always list
+            <code>.env</code> and <code>.env.*</code> in your <code>.dockerignore</code>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 8. DJANGO SETUP ═══════════════════════════════════ -->
+    <section class="section" id="django-setup">
+      <div class="section-header">
+        <div class="section-num-badge">08</div>
+        <div class="section-title-group">
+          <div class="section-title">Django Project Setup</div>
+          <div class="section-subtitle">Bootstrapping Django entirely inside the container</div>
+        </div>
+      </div>
+
+      <p>
+        The golden rule of Docker-based development is: <strong>run every application command
+        inside the container, never on your host machine.</strong> This means Django project
+        creation, management commands, tests, and migrations all happen via
+        <code>docker compose run</code>.
+      </p>
+
+      <div class="analogy">
+        <div class="analogy-label">&#128218; Mental Model</div>
+        <p>
+          Think of <code>docker compose run --rm app sh -c "command"</code> as "SSH into a
+          temporary copy of the container, run this one command, then destroy the container."
+          The <code>--rm</code> flag means the container is deleted after the command finishes.
+          Your code changes persist because the <code>app/</code> directory is mounted as a volume.
+        </p>
+      </div>
+
+      <div class="step-list">
+        <div class="step-card">
+          <div class="step-circle">1</div>
+          <div class="step-body">
+            <div class="step-title">Build the image first</div>
+            <div class="step-desc">
+              Before any other command, you must build the Docker image. This executes every
+              instruction in your Dockerfile: pulls the base image, installs Python packages,
+              creates the user. Repeat this whenever you change the Dockerfile or
+              requirements files.
+            </div>
+            <div class="code-block" style="margin-top:.85rem">
+              <div class="code-top"><div class="code-file"><div class="code-dot"></div>Terminal</div><div class="code-badge">shell</div></div>
+              <pre><code>docker compose build</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card gold">
+          <div class="step-circle">2</div>
+          <div class="step-body">
+            <div class="step-title">Create the Django project inside the container</div>
+            <div class="step-desc">
+              Run <code>startproject</code> inside the container. The trailing dot (<code>.</code>)
+              tells Django to create the project in the current directory (<code>/app</code> inside
+              the container, which is mapped to your local <code>./app</code>) rather than creating
+              a nested subfolder.
+            </div>
+            <div class="code-block" style="margin-top:.85rem">
+              <div class="code-top"><div class="code-file"><div class="code-dot"></div>Terminal</div><div class="code-badge">shell</div></div>
+              <pre><code>docker compose run --rm app sh -c "django-admin startproject app ."</code></pre>
+            </div>
+            <div class="step-why" style="margin-top:.75rem">
+              <strong>Why does this create files on your host?</strong> The <code>./app:/app</code>
+              volume mount works both ways. Files created inside the container at <code>/app</code>
+              appear immediately in your local <code>./app</code> directory. After this command
+              you will see <code>manage.py</code> and the inner <code>app/</code> folder appear
+              in VS Code.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card blue">
+          <div class="step-circle">3</div>
+          <div class="step-body">
+            <div class="step-title">Start the development server</div>
+            <div class="step-desc">
+              Compose runs your <code>command</code> from <code>docker-compose.yml</code>:
+              first migrates the database, then starts Django on all network interfaces
+              (<code>0.0.0.0</code>) so the port is accessible from your host at
+              <code>http://localhost:8000</code>.
+            </div>
+            <div class="code-block" style="margin-top:.85rem">
+              <div class="code-top"><div class="code-file"><div class="code-dot"></div>Terminal</div><div class="code-badge">shell</div></div>
+              <pre><code>docker compose up</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">4</div>
+          <div class="step-body">
+            <div class="step-title">Run the test suite</div>
+            <div class="step-desc">
+              Always run tests inside the container. The <code>--rm</code> flag destroys the
+              container after tests complete, keeping your environment clean. The exit code
+              from this command is used by CI to determine pass/fail.
+            </div>
+            <div class="code-block" style="margin-top:.85rem">
+              <div class="code-top"><div class="code-file"><div class="code-dot"></div>Terminal</div><div class="code-badge">shell</div></div>
+              <pre><code>docker compose run --rm app sh -c "python manage.py test"</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card gold">
+          <div class="step-circle">5</div>
+          <div class="step-body">
+            <div class="step-title">Run the linter</div>
+            <div class="step-desc">
+              Flake8 checks your code for PEP 8 style violations. It runs on the entire
+              codebase (<code>.</code>). Configure exceptions and max line length in a
+              <code>.flake8</code> file at the project root.
+            </div>
+            <div class="code-block" style="margin-top:.85rem">
+              <div class="code-top"><div class="code-file"><div class="code-dot"></div>Terminal</div><div class="code-badge">shell</div></div>
+              <pre><code>docker compose run --rm app sh -c "flake8 ."</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 9. CI/CD ══════════════════════════════════════════ -->
+    <section class="section" id="cicd">
+      <div class="section-header">
+        <div class="section-num-badge">09</div>
+        <div class="section-title-group">
+          <div class="section-title">CI/CD with GitHub Actions</div>
+          <div class="section-subtitle">Automated testing and linting on every single commit</div>
+        </div>
+      </div>
+
+      <p>
+        Continuous Integration (CI) means running your tests automatically every time code is
+        pushed. If the tests fail, you know immediately — before bad code reaches your main branch
+        or production. GitHub Actions is GitHub's built-in CI runner and it is completely free
+        for public repositories.
+      </p>
+
+      <div class="concept">
+        <div class="concept-label">Core Concept</div>
+        <h3>How GitHub Actions Works</h3>
+        <p>
+          When you push a commit, GitHub reads the YAML files inside <code>.github/workflows/</code>
+          and triggers the matching workflows. Each workflow runs on a fresh virtual machine
+          (called a <strong>runner</strong>) in GitHub's infrastructure. The runner executes your
+          steps in order: checkout code, log into Docker Hub, build the image, run tests.
+        </p>
+        <p>
+          If any step exits with a non-zero code, the workflow fails and GitHub marks the commit
+          with a red &#10005;. A green &#10003; means all steps passed. You can require a green
+          check before merging a pull request — this is the foundation of safe team development.
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-top">
+          <div class="code-file"><div class="code-dot"></div>.github/workflows/checks.yml</div>
+          <div class="code-badge">yaml</div>
+        </div>
+        <pre><code><span class="k">---</span>
+<span class="k">name:</span> <span class="s">Checks</span>
+
+<span class="k">on:</span> [<span class="s">push</span>]          <span class="c"># Trigger on every push to any branch</span>
+
+<span class="k">jobs:</span>
+  <span class="v">test-lint:</span>
+    <span class="k">name:</span> <span class="s">Test and Lint</span>
+    <span class="k">runs-on:</span> <span class="s">ubuntu-24.04</span>   <span class="c"># Fresh Ubuntu VM for every run</span>
+
+    <span class="k">steps:</span>
+      <span class="c"># Step 1: Authenticate BEFORE checkout to avoid rate limits</span>
+      - <span class="k">name:</span> <span class="s">Login to Docker Hub</span>
+        <span class="k">uses:</span> <span class="s">docker/login-action@v3</span>
+        <span class="k">with:</span>
+          <span class="k">username:</span> <span class="s">${{ secrets.DOCKERHUB_USER }}</span>
+          <span class="k">password:</span> <span class="s">${{ secrets.DOCKERHUB_TOKEN }}</span>
+
+      <span class="c"># Step 2: Clone your repository onto the runner</span>
+      - <span class="k">name:</span> <span class="s">Check out code</span>
+        <span class="k">uses:</span> <span class="s">actions/checkout@v4</span>
+
+      <span class="c"># Step 3: Run Django tests inside the container</span>
+      - <span class="k">name:</span> <span class="s">Test</span>
+        <span class="k">run:</span> <span class="s">docker compose run --rm app sh -c "python manage.py test"</span>
+
+      <span class="c"># Step 4: Run PEP 8 linter inside the container</span>
+      - <span class="k">name:</span> <span class="s">Lint</span>
+        <span class="k">run:</span> <span class="s">docker compose run --rm app sh -c "flake8 ."</span></code></pre>
+      </div>
+
+      <h2>Why login before checkout?</h2>
+      <p>
+        At first glance this ordering seems wrong — why log into Docker Hub before you have
+        the code? The answer is about when Docker pulls images. GitHub's hosted runners share
+        IP addresses. An unauthenticated pull could hit Docker Hub's rate limit at any moment.
+        Authenticating first ensures the entire workflow — including the base image pull during
+        <code>docker compose run</code> — is authenticated.
+      </p>
+
+      <h2>Setting up GitHub Secrets</h2>
+      <p>
+        Secrets are encrypted environment variables stored in your GitHub repository. They are
+        injected into workflow runs but never exposed in logs. Go to your repo on GitHub:
+        <strong>Settings &rarr; Secrets and variables &rarr; Actions &rarr; New repository secret</strong>.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Secret Name</th><th>What to put in it</th><th>Where to get it</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>DOCKERHUB_USER</code></td>
+              <td>Your Docker Hub username (not email)</td>
+              <td>hub.docker.com &rarr; Account Settings</td>
+            </tr>
+            <tr>
+              <td><code>DOCKERHUB_TOKEN</code></td>
+              <td>A Docker Hub Access Token (not your password)</td>
+              <td>hub.docker.com &rarr; Account Settings &rarr; Security &rarr; New Access Token</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-success">
+        <div class="callout-icon">&#9989;</div>
+        <div>
+          <div class="callout-tag">Use Access Tokens, not passwords</div>
+          <p>Docker Hub Access Tokens are scoped credentials that can be revoked independently
+          of your account password. If a token is accidentally exposed, you revoke it without
+          changing your password. Create a dedicated token for each CI pipeline so you can
+          audit and revoke access independently.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 10. COMMANDS ═════════════════════════════════════ -->
+    <section class="section" id="commands">
+      <div class="section-header">
+        <div class="section-num-badge">10</div>
+        <div class="section-title-group">
+          <div class="section-title">Command Reference</div>
+          <div class="section-subtitle">Your complete Docker + Django cheat sheet</div>
+        </div>
+      </div>
+
+      <h2>Build commands</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>What it does &amp; when to use it</th></tr></thead>
+          <tbody>
+            <tr><td><code>docker compose build</code></td><td>Builds (or rebuilds) all service images using the Dockerfile. Run after changes to Dockerfile or requirements files.</td></tr>
+            <tr><td><code>docker compose build --no-cache</code></td><td>Full clean rebuild, completely ignoring all cached layers. Use when a build gives unexpected results or after changing base images.</td></tr>
+            <tr><td><code>docker build .</code></td><td>Build directly from the Dockerfile without Compose. Useful for testing the raw Dockerfile without any Compose overrides.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Runtime commands</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>docker compose up</code></td><td>Starts all services in the foreground. Ctrl+C stops everything.</td></tr>
+            <tr><td><code>docker compose up -d</code></td><td>Starts all services detached (background). Use when you don't need to watch logs.</td></tr>
+            <tr><td><code>docker compose down</code></td><td>Stops and removes all containers. Data in volumes is preserved.</td></tr>
+            <tr><td><code>docker compose logs -f app</code></td><td>Streams live logs from the app container. Essential for debugging.</td></tr>
+            <tr><td><code>docker compose run --rm app sh</code></td><td>Opens an interactive shell inside a temporary container. Use for exploration and debugging.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Django management commands</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>docker compose run --rm app sh -c "python manage.py test"</code></td><td>Run the full Django test suite</td></tr>
+            <tr><td><code>docker compose run --rm app sh -c "python manage.py makemigrations"</code></td><td>Generate new migration files from model changes</td></tr>
+            <tr><td><code>docker compose run --rm app sh -c "python manage.py migrate"</code></td><td>Apply pending migrations to the database</td></tr>
+            <tr><td><code>docker compose run --rm app sh -c "python manage.py createsuperuser"</code></td><td>Create an admin user for the Django admin panel</td></tr>
+            <tr><td><code>docker compose run --rm app sh -c "python manage.py startapp &lt;name&gt;"</code></td><td>Create a new Django app inside the container</td></tr>
+            <tr><td><code>docker compose run --rm app sh -c "flake8 ."</code></td><td>Run PEP 8 linter across the entire codebase</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ═══ 11. TROUBLESHOOTING ══════════════════════════════ -->
+    <section class="section" id="troubleshoot">
+      <div class="section-header">
+        <div class="section-num-badge">11</div>
+        <div class="section-title-group">
+          <div class="section-title">Troubleshooting Guide</div>
+          <div class="section-subtitle">Every error you will encounter and exactly how to fix it</div>
+        </div>
+      </div>
+
+      <p>
+        These are real errors encountered while building this exact project. Each one has a root
+        cause, a diagnostic command, and a verified fix.
+      </p>
+
+      <div class="step-list">
+        <div class="step-card">
+          <div class="step-circle">!</div>
+          <div class="step-body">
+            <div class="step-title">the Dockerfile cannot be empty</div>
+            <div class="step-desc">
+              The build context is sending a 0-byte file. The Dockerfile exists in your
+              editor but has not been saved to disk yet.
+            </div>
+            <div class="step-why" style="background:var(--red-bg);color:var(--red)">
+              <strong>Diagnose:</strong> <code>Get-Item Dockerfile | Select-Object Length</code>
+              will show <code>0</code>. Press <strong>Ctrl+S</strong> in VS Code to save the file.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">!</div>
+          <div class="step-body">
+            <div class="step-title">COPY failed: file not found — ./app</div>
+            <div class="step-desc">
+              The <code>app/</code> directory does not exist in your project root.
+              Docker cannot copy a directory that doesn't exist, even if the Dockerfile is valid.
+            </div>
+            <div class="step-why" style="background:var(--amber-bg);color:var(--amber)">
+              <strong>Fix:</strong> Run <code>mkdir app</code> in the project root.
+              The directory can be empty — Docker will copy an empty directory successfully.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">!</div>
+          <div class="step-body">
+            <div class="step-title">docker-compose: command not found (in CI)</div>
+            <div class="step-desc">
+              Your GitHub Actions workflow uses <code>docker-compose</code> (with a hyphen).
+              Ubuntu 24.04 runners only have Docker Compose V2 installed as
+              <code>docker compose</code> (with a space).
+            </div>
+            <div class="step-why" style="background:var(--amber-bg);color:var(--amber)">
+              <strong>Fix:</strong> Replace all <code>docker-compose</code> with
+              <code>docker compose</code> in your <code>checks.yml</code> file.
+              This is already fixed in this project.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">!</div>
+          <div class="step-body">
+            <div class="step-title">the attribute `version` is obsolete</div>
+            <div class="step-desc">
+              Your <code>docker-compose.yml</code> has <code>version: '3.9'</code> at the top.
+              Compose V2 no longer uses this field and prints a warning on every command.
+            </div>
+            <div class="step-why" style="background:var(--amber-bg);color:var(--amber)">
+              <strong>Fix:</strong> Delete the <code>version:</code> line entirely.
+              Compose V2 auto-detects the format. This is already fixed in this project.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">!</div>
+          <div class="step-body">
+            <div class="step-title">.dockerignore has no effect / entire project in context</div>
+            <div class="step-desc">
+              The ignore file is named <code>dockerignore</code> without a leading dot.
+              Docker silently ignores files without the dot prefix.
+            </div>
+            <div class="step-why" style="background:var(--amber-bg);color:var(--amber)">
+              <strong>Fix:</strong> Rename to <code>.dockerignore</code>.
+              In PowerShell: <code>Rename-Item dockerignore .dockerignore</code>.
+              This was fixed in your project today.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-circle">!</div>
+          <div class="step-body">
+            <div class="step-title">toomanyrequests: Docker Hub rate limit exceeded</div>
+            <div class="step-desc">
+              Your CI pipeline is pulling Docker images without authenticating.
+              GitHub-hosted runners share IP addresses with other users and collectively
+              exhaust the 100 unauthenticated pulls per 6 hours.
+            </div>
+            <div class="step-why" style="background:var(--red-bg);color:var(--red)">
+              <strong>Fix:</strong> Ensure <code>docker/login-action</code> runs as the
+              <em>first</em> step in your workflow, before <code>actions/checkout</code>.
+              Verify <code>DOCKERHUB_USER</code> and <code>DOCKERHUB_TOKEN</code> secrets
+              are set in your repo settings.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-brand">code<span>::</span>core</div>
+      <p>Django on Docker &mdash; Master Build Manual &bull; codeandcore.dev &bull; &copy; 2026</p>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  // Scroll-spy: highlight active chapter in sidebar
+  const sections = document.querySelectorAll('.section');
+  const links    = document.querySelectorAll('.nav-link');
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        links.forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -72% 0px' });
+
+  sections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>

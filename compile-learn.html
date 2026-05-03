@@ -1,0 +1,1388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compile from Source on Ubuntu — Build Book | code::core</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── CODE & CORE BRAND TOKENS ─────────────────────────── */
+    :root {
+      --navy:       #0D2340;
+      --navy-dark:  #0D2340;
+      --blue-800:   #14305A;
+      --blue-700:   #1E4D8C;
+      --blue-500:   #3970B8;
+      --blue-300:   #7AAAD6;
+      --blue-50:    #EAF0FA;
+      --gold:       #B8922A;
+      --ivory:      #F9F6EF;
+      --parch:      #EDE8DC;
+      --ink:        #1C1A16;
+      --ink-mid:    #3D3A32;
+      --ink-soft:   #6B6760;
+      --rule:       #D5CFC3;
+      --green:      #2A6B43;
+      --green-bg:   #EAF3EE;
+      --amber:      #9A5B0A;
+      --amber-bg:   #FDF3E3;
+      --red:        #8C2020;
+      --red-bg:     #FAEAEA;
+      --info-bg:    #EAF0FA;
+      --r:   10px;
+      --rs:  6px;
+      --rl:  16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.85;
+    }
+
+    ::selection { background: var(--navy); color: var(--ivory); }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--ivory); }
+    ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+    /* ── LAYOUT ───────────────────────────────────────────── */
+    .wrapper { display: flex; min-height: 100vh; }
+
+    /* ── SIDEBAR ──────────────────────────────────────────── */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--navy);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar::-webkit-scrollbar-track { background: var(--navy); }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--blue-700); }
+
+    .sidebar-brand {
+      padding: 2rem 1.75rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .brand-wordmark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--ivory);
+      margin-bottom: .25rem;
+    }
+    .brand-wordmark span { color: var(--gold); }
+    .brand-sub {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--blue-300);
+    }
+
+    .nav-group { padding: 1.25rem 1.75rem .5rem; }
+    .nav-group-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--blue-300);
+      margin-bottom: .6rem;
+      opacity: .7;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .45rem .65rem;
+      border-radius: var(--rs);
+      color: rgba(255,255,255,.6);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 400;
+      transition: all .15s;
+      margin-bottom: 2px;
+    }
+    .nav-link:hover { background: rgba(255,255,255,.08); color: var(--ivory); }
+    .nav-link.active {
+      background: var(--gold);
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .nav-num {
+      width: 18px; height: 18px; min-width: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.5);
+    }
+    .nav-link.active .nav-num { background: rgba(13,35,64,.2); color: var(--navy); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 1.25rem 1.75rem;
+      border-top: 1px solid rgba(255,255,255,.08);
+      font-size: 11px;
+      color: rgba(255,255,255,.3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── MAIN ─────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 3.5rem 5rem 5rem;
+      max-width: 920px;
+    }
+
+    /* ── HERO ─────────────────────────────────────────────── */
+    .hero {
+      background: var(--navy);
+      border-radius: var(--rl);
+      padding: 3.5rem;
+      margin-bottom: 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(184,146,42,.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      bottom: -40px; left: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(30,77,140,.4) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(34px, 4vw, 50px);
+      font-weight: 600;
+      line-height: 1.07;
+      color: var(--ivory);
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+    .hero-desc {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.85;
+      color: rgba(249,246,239,.7);
+      max-width: 560px;
+      margin-bottom: 2rem;
+    }
+
+    .mode-switch {
+      display: inline-flex;
+      background: rgba(8,29,43,.45);
+      border: 1px solid rgba(230,244,255,.28);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 1rem;
+    }
+    .mode-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,.65);
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .mode-btn.is-active { background: var(--gold); color: var(--navy); }
+    .mode-note {
+      font-size: 13px;
+      color: rgba(249,246,239,.5);
+      max-width: 52ch;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 0;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .hero-stat {
+      flex: 1;
+      padding-right: 2rem;
+      border-right: 1px solid rgba(255,255,255,.1);
+      margin-right: 2rem;
+    }
+    .hero-stat:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+    .stat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: .2rem;
+    }
+    .stat-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(249,246,239,.4);
+    }
+
+    /* ── SECTION ──────────────────────────────────────────── */
+    .section { margin-bottom: 4rem; scroll-margin-top: 2rem; }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--parch);
+    }
+    .section-num {
+      width: 40px; height: 40px; min-width: 40px;
+      background: var(--navy);
+      color: var(--ivory);
+      border-radius: var(--rs);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 700;
+      margin-top: 3px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+    .section-subtitle {
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--ink-soft);
+      margin-top: .2rem;
+    }
+
+    h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--navy);
+      margin: 1.5rem 0 .6rem;
+      line-height: 1.2;
+    }
+
+    p { margin: .6rem 0; }
+
+    .lead {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--ink-mid);
+      line-height: 1.85;
+      margin-bottom: 1.25rem;
+    }
+
+    ul, ol { margin: .5rem 0 .5rem 1.4rem; padding: 0; }
+    li { margin: .4rem 0; }
+
+    /* ── CALLOUTS ─────────────────────────────────────────── */
+    .callout {
+      padding: 1.1rem 1.4rem;
+      border-radius: var(--r);
+      margin: 1.25rem 0;
+      border-left: 4px solid;
+    }
+    .callout.why     { background: var(--info-bg);  border-color: var(--blue-700); }
+    .callout.warn    { background: var(--amber-bg); border-color: var(--amber); }
+    .callout.ok      { background: var(--green-bg); border-color: var(--green); }
+
+    .callout strong {
+      display: block;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: .4rem;
+    }
+    .callout.why  strong { color: var(--blue-700); }
+    .callout.warn strong { color: var(--amber); }
+    .callout.ok   strong { color: var(--green); }
+    .callout p { font-size: 14px; color: var(--ink-mid); line-height: 1.75; margin: 0; }
+
+    /* ── CODE ─────────────────────────────────────────────── */
+    .pre-wrap {
+      position: relative;
+      margin: 1.25rem 0;
+    }
+    .pre-wrap pre {
+      margin: 0;
+    }
+    pre {
+      background: var(--navy);
+      color: #C9D1D9;
+      padding: 1.5rem 1.75rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.75;
+      border-radius: var(--r);
+      margin: 1.25rem 0;
+      box-shadow: 0 4px 24px rgba(13,35,64,.1);
+    }
+    .copy-btn {
+      position: absolute;
+      top: .65rem;
+      right: .65rem;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--rs);
+      color: rgba(255,255,255,.55);
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .15s, background .15s, color .15s;
+      user-select: none;
+    }
+    .pre-wrap:hover .copy-btn { opacity: 1; }
+    .copy-btn:hover {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--navy);
+    }
+    .copy-btn.copied {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+      opacity: 1;
+    }
+    code { font-family: 'JetBrains Mono', monospace; }
+    :not(pre) > code {
+      background: var(--parch);
+      border: 1px solid var(--rule);
+      color: var(--blue-700);
+      padding: .1em .4em;
+      border-radius: 4px;
+      font-size: 12.5px;
+      font-weight: 500;
+    }
+
+    /* ── TABLE ────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--r);
+      border: 1px solid var(--rule);
+      margin: 1.25rem 0;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; background: var(--ivory); }
+    th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+    th {
+      background: var(--parch);
+      color: var(--navy);
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .15em;
+    }
+    td { font-size: 14px; color: var(--ink-mid); }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── CARDS ────────────────────────────────────────────── */
+    .card {
+      background: var(--ivory);
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+
+    /* ── LABS ─────────────────────────────────────────────── */
+    .lab {
+      background: var(--ivory);
+      border: 1px solid var(--rule);
+      border-radius: var(--r);
+      padding: 1.75rem;
+      margin: 1.5rem 0;
+    }
+    .lab h3 { margin-top: 0; }
+    .lab-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: .75rem 0 1rem; }
+    .badge {
+      background: var(--blue-50);
+      border: 1px solid var(--blue-300);
+      color: var(--blue-700);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+    }
+    .worked {
+      margin-top: 1rem;
+      border-left: 4px solid var(--navy);
+      background: var(--info-bg);
+      border-radius: 0 var(--r) var(--r) 0;
+      padding: 1rem 1.25rem;
+    }
+    .worked strong {
+      display: block;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: .5rem;
+    }
+
+    /* ── PODCAST OUTLINE STEPS ────────────────────────────── */
+    .outline-step {
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--gold);
+      background: var(--parch);
+      border-radius: 0 var(--r) var(--r) 0;
+      padding: 1rem 1.25rem;
+      margin: .85rem 0;
+    }
+    .outline-step strong {
+      display: block;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: .4rem;
+    }
+    .outline-step p { font-size: 14px; color: var(--ink-mid); margin: 0; }
+
+    /* ── PIPELINE ─────────────────────────────────────────── */
+    .pipeline {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+      align-items: start;
+      gap: 8px;
+      margin: 1.5rem 0;
+    }
+    .pipe-card {
+      background: var(--ivory);
+      border: 1px solid var(--rule);
+      border-top: 3px solid var(--navy);
+      border-radius: var(--r);
+      padding: 1.25rem;
+    }
+    .pipe-card h3 { font-size: 16px; margin-top: 0; margin-bottom: .5rem; }
+    .pipe-card p { font-size: 13px; color: var(--ink-soft); margin-bottom: .5rem; }
+    .pipe-arrow {
+      font-size: 22px;
+      color: var(--gold);
+      align-self: center;
+      text-align: center;
+      padding: 0 4px;
+      font-weight: 700;
+    }
+    .mini-list { margin: .4rem 0 0 1rem; font-size: 12px; color: var(--ink-mid); }
+
+    /* ── FOOTER ───────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 13px;
+      padding: 2.5rem 1rem 3rem;
+      border-top: 1px solid var(--rule);
+      margin-top: 2rem;
+    }
+    .footer strong { color: var(--navy); font-weight: 600; }
+
+    /* ── ADVANCED MODE GATING ─────────────────────────────── */
+    [data-level="advanced"] { display: none; }
+    body[data-mode="advanced"] [data-level="advanced"] { display: block; }
+
+    /* ── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .wrapper { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .sidebar-footer { display: none; }
+      .main { padding: 2rem 1.5rem 3rem; max-width: 100%; }
+      .two-col { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr; }
+      .pipe-arrow { transform: rotate(90deg); justify-self: center; }
+      .hero { padding: 2.5rem 2rem; }
+      .hero h1 { font-size: 34px; }
+    }
+  </style>
+</head>
+<body data-mode="beginner">
+  <div class="wrapper">
+
+    <!-- ── SIDEBAR ───────────────────────────────────────── -->
+    <nav class="sidebar" aria-label="Chapter navigation">
+      <div class="sidebar-brand">
+        <div class="brand-wordmark">code<span>::</span>core</div>
+        <div class="brand-sub">Build Book</div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Foundations</div>
+        <a class="nav-link" href="#why"><span class="nav-num">1</span>Why compile from source</a>
+        <a class="nav-link" href="#when"><span class="nav-num">2</span>When to use it</a>
+        <a class="nav-link" href="#prep"><span class="nav-num">3</span>Build environment setup</a>
+        <a class="nav-link" href="#workflow"><span class="nav-num">4</span>Core build workflow</a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Examples</div>
+        <a class="nav-link" href="#example-c"><span class="nav-num">5</span>Example A: C program</a>
+        <a class="nav-link" href="#example-configure"><span class="nav-num">6</span>Example B: configure+make</a>
+        <a class="nav-link" href="#example-cmake"><span class="nav-num">7</span>Example C: CMake</a>
+        <a class="nav-link" href="#example-meson"><span class="nav-num">8</span>Example D: Meson</a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Practice &amp; Reference</div>
+        <a class="nav-link" href="#debug"><span class="nav-num">9</span>Debug &amp; troubleshoot</a>
+        <a class="nav-link" href="#safety"><span class="nav-num">10</span>Safe install strategy</a>
+        <a class="nav-link" href="#cheatsheet"><span class="nav-num">11</span>Command cheat sheet</a>
+        <a class="nav-link" href="#practice"><span class="nav-num">12</span>Practice roadmap</a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Labs &amp; Deep Dives</div>
+        <a class="nav-link" href="#labs"><span class="nav-num">13</span>Full lab exercises</a>
+        <a class="nav-link" href="#podcast"><span class="nav-num">14</span>Podcast blueprint</a>
+        <a class="nav-link" href="#pipeline-map"><span class="nav-num">15</span>Visual build pipeline</a>
+      </div>
+
+      <div class="sidebar-footer">
+        Ubuntu practical handbook<br>code::core &copy; 2026
+      </div>
+    </nav>
+
+    <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+    <main class="main">
+
+      <!-- HERO -->
+      <header class="hero">
+        <div class="hero-eyebrow">Ubuntu Build Book</div>
+        <h1>Compile from Source<br>on <em>Linux Ubuntu</em></h1>
+        <p class="hero-desc">
+          A full teaching book on the why, the how, and the real commands. You will learn to
+          build software from source with confidence, debug failures, and install safely without
+          breaking your Ubuntu system packages.
+        </p>
+
+        <div class="mode-switch" role="tablist" aria-label="Learning depth switch">
+          <button class="mode-btn is-active" id="mode-beginner" data-mode-target="beginner" role="tab" aria-selected="true">Beginner Mode</button>
+          <button class="mode-btn" id="mode-advanced" data-mode-target="advanced" role="tab" aria-selected="false">Advanced Mode</button>
+        </div>
+        <p class="mode-note">Switch anytime. Beginner covers fundamentals. Advanced adds flags, diagnostics, and production practices.</p>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="stat-val">15</div>
+            <div class="stat-label">Chapters</div>
+          </div>
+          <div class="hero-stat">
+            <div class="stat-val">4</div>
+            <div class="stat-label">Real Examples</div>
+          </div>
+          <div class="hero-stat">
+            <div class="stat-val">4</div>
+            <div class="stat-label">Full Labs</div>
+          </div>
+          <div class="hero-stat">
+            <div class="stat-val">Ubuntu</div>
+            <div class="stat-label">Focused</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- CH 01 -->
+      <section class="section" id="why">
+        <div class="section-header">
+          <div class="section-num">01</div>
+          <div>
+            <div class="section-title">Why Compile from Source</div>
+            <div class="section-subtitle">Control version, features, and optimisation flags yourself</div>
+          </div>
+        </div>
+        <p class="lead">Compiling from source means turning human-readable code into machine code on your own system. You are no longer limited to what your package manager currently ships.</p>
+        <div class="callout why">
+          <strong>Why this matters</strong>
+          When you compile yourself, you control version, optimisation flags, optional features, and even security hardening options.
+        </div>
+        <div class="callout ok" data-level="advanced">
+          <strong>Advanced angle</strong>
+          Source builds let you apply hardening defaults such as <code>-D_FORTIFY_SOURCE=3</code>, <code>-fstack-protector-strong</code>, and linker settings like <code>-Wl,-z,relro,-z,now</code> where the project supports it.
+        </div>
+        <ul>
+          <li>Use newer versions than Ubuntu repositories provide.</li>
+          <li>Enable features disabled in distro builds.</li>
+          <li>Tune performance for your machine or workload.</li>
+          <li>Learn how software is actually assembled, not just installed.</li>
+        </ul>
+      </section>
+
+      <!-- CH 02 -->
+      <section class="section" id="when">
+        <div class="section-header">
+          <div class="section-num">02</div>
+          <div>
+            <div class="section-title">When to Use It (And When Not To)</div>
+            <div class="section-subtitle">Good judgement saves hours of maintenance</div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h3>Good reasons</h3>
+            <ul>
+              <li>You need a feature not in apt packages.</li>
+              <li>You are developing or patching upstream code.</li>
+              <li>You need deterministic build options for teaching or labs.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Bad reasons</h3>
+            <ul>
+              <li>You only need a common app available in apt.</li>
+              <li>You cannot maintain updates manually afterward.</li>
+              <li>You need fast setup more than deep control.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout warn">
+          <strong>Risk warning</strong>
+          Manual installs can conflict with package manager files if you install into system paths carelessly. Use a clean prefix strategy (explained in chapter 10).
+        </div>
+      </section>
+
+      <!-- CH 03 -->
+      <section class="section" id="prep">
+        <div class="section-header">
+          <div class="section-num">03</div>
+          <div>
+            <div class="section-title">Ubuntu Build Environment Setup</div>
+            <div class="section-subtitle">Install the toolchain once, build forever</div>
+          </div>
+        </div>
+        <p>Install the baseline tooling once:</p>
+        <pre><code>sudo apt update
+sudo apt install -y build-essential pkg-config curl git ca-certificates</code></pre>
+        <h3>What this gives you</h3>
+        <ul>
+          <li><code>build-essential</code>: GCC, G++, make, libc headers.</li>
+          <li><code>pkg-config</code>: helps compilers locate library flags.</li>
+          <li><code>git</code> and <code>curl</code>: fetch source code.</li>
+        </ul>
+        <p>Install common build systems too:</p>
+        <pre><code>sudo apt install -y cmake ninja-build meson autoconf automake libtool</code></pre>
+        <div class="callout ok">
+          <strong>Pro tip</strong>
+          For libraries, install development headers using <code>-dev</code> packages. Example: <code>libssl-dev</code>, <code>zlib1g-dev</code>, <code>libsqlite3-dev</code>.
+        </div>
+        <div class="card" data-level="advanced">
+          <h3>Advanced dependency discovery workflow</h3>
+          <pre><code>apt-file update
+apt-file search 'openssl/ssl.h'
+
+pkg-config --list-all | grep -E 'ssl|zlib|sqlite'</code></pre>
+        </div>
+      </section>
+
+      <!-- CH 04 -->
+      <section class="section" id="workflow">
+        <div class="section-header">
+          <div class="section-num">04</div>
+          <div>
+            <div class="section-title">Core Build Workflow</div>
+            <div class="section-subtitle">The seven-stage sequence every source build follows</div>
+          </div>
+        </div>
+        <ol>
+          <li>Get source: download tarball or clone git repo.</li>
+          <li>Read docs: look for README, INSTALL, or BUILDING.</li>
+          <li>Configure: choose install prefix and features.</li>
+          <li>Build: run compile commands.</li>
+          <li>Test: run project tests if available.</li>
+          <li>Install: place binaries in controlled paths.</li>
+          <li>Verify: run binary and version checks.</li>
+        </ol>
+        <div class="callout why">
+          <strong>Why this sequence</strong>
+          It reduces guesswork. Configure errors are dependency problems. Build errors are source or compiler problems. Test failures are behaviour problems. Keeping stages separate makes debugging faster.
+        </div>
+        <h3>Command language decoder: what these words actually mean</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Term</th><th>Plain meaning</th><th>What changes on disk</th></tr></thead>
+            <tbody>
+              <tr><td><code>compile</code></td><td>Translate source code (.c, .cpp) into object files (.o)</td><td>Creates object artifacts, not final executable</td></tr>
+              <tr><td><code>link</code></td><td>Combine object files and libraries into executable or shared library</td><td>Creates runnable binary like <code>app</code> or <code>libxyz.so</code></td></tr>
+              <tr><td><code>build</code></td><td>The whole pipeline: configure + compile + link (and sometimes tests)</td><td>Produces all generated artifacts under build tree</td></tr>
+              <tr><td><code>./configure</code></td><td>Detect compiler, libraries, features, and generate Makefiles</td><td>Writes <code>Makefile</code> and config headers</td></tr>
+              <tr><td><code>make</code></td><td>Execute dependency graph in Makefile to build targets</td><td>Creates/updates artifacts needed for default target</td></tr>
+              <tr><td><code>make check</code></td><td>Run project's test targets after build</td><td>Writes test logs and test binaries</td></tr>
+              <tr><td><code>make install</code></td><td>Copy built outputs into install prefix like <code>/opt/tool</code></td><td>Writes binaries, libs, headers, man pages to install path</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout ok">
+          <strong>Mental model</strong>
+          Compile is kitchen prep, link is plating, build is full service, and install is serving the final dish to its permanent shelf.
+        </div>
+        <div class="card" data-level="advanced">
+          <h3>Advanced build profile matrix</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Profile</th><th>Common Flags</th><th>Use case</th></tr></thead>
+              <tbody>
+                <tr><td>Debug</td><td><code>-O0 -g3</code></td><td>Investigate crashes with gdb</td></tr>
+                <tr><td>Release</td><td><code>-O2 -DNDEBUG</code></td><td>Balanced performance build</td></tr>
+                <tr><td>Sanitized</td><td><code>-fsanitize=address,undefined -fno-omit-frame-pointer</code></td><td>Find memory and UB bugs</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CH 05 -->
+      <section class="section" id="example-c">
+        <div class="section-header">
+          <div class="section-num">05</div>
+          <div>
+            <div class="section-title">Example A: Compile a Tiny C Program</div>
+            <div class="section-subtitle">Your first end-to-end source build in under five minutes</div>
+          </div>
+        </div>
+        <p>Create <code>hello.c</code>:</p>
+        <pre><code>#include &lt;stdio.h&gt;
+
+int main(void) {
+  printf("Hello from source build!\n");
+  return 0;
+}</code></pre>
+        <p>Compile and run:</p>
+        <pre><code>gcc -Wall -Wextra -O2 hello.c -o hello
+./hello</code></pre>
+        <h3>Flags explained</h3>
+        <ul>
+          <li><code>-Wall -Wextra</code>: turns on useful warnings.</li>
+          <li><code>-O2</code>: standard optimisation level.</li>
+          <li><code>-o hello</code>: output binary name.</li>
+        </ul>
+        <div class="card" data-level="advanced">
+          <h3>Advanced compile variants</h3>
+          <pre><code># Strict warnings as errors
+gcc -Wall -Wextra -Wpedantic -Werror -O2 hello.c -o hello
+
+# Debug + sanitizer build
+gcc -O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer hello.c -o hello_dbg
+./hello_dbg</code></pre>
+        </div>
+      </section>
+
+      <!-- CH 06 -->
+      <section class="section" id="example-configure">
+        <div class="section-header">
+          <div class="section-num">06</div>
+          <div>
+            <div class="section-title">Example B: configure + make + install</div>
+            <div class="section-subtitle">The GNU autotools pattern used by thousands of projects</div>
+          </div>
+        </div>
+        <pre><code># 1) Download source
+curl -LO https://ftp.gnu.org/gnu/hello/hello-2.12.1.tar.gz
+
+# 2) Extract and enter
+tar -xzf hello-2.12.1.tar.gz
+cd hello-2.12.1
+
+# 3) Configure
+./configure --prefix=/opt/hello-2.12.1
+
+# 4) Build
+make -j"$(nproc)"
+
+# 5) Optional tests
+make check
+
+# 6) Install
+sudo make install
+
+# 7) Verify
+/opt/hello-2.12.1/bin/hello</code></pre>
+        <h3>Line-by-line explanation</h3>
+        <ul>
+          <li><code>./configure --prefix=/opt/hello-2.12.1</code>: discovers your environment and writes build instructions targeting a safe install location.</li>
+          <li><code>make -j"$(nproc)"</code>: runs parallel compile jobs; <code>$(nproc)</code> means "number of CPU cores".</li>
+          <li><code>make check</code>: executes the project's own tests to validate behaviour before installation.</li>
+          <li><code>sudo make install</code>: copies built artifacts into the prefix; <code>sudo</code> needed because <code>/opt</code> is root-owned.</li>
+          <li><code>/opt/hello-2.12.1/bin/hello</code>: direct verification the installed binary runs from the exact intended location.</li>
+        </ul>
+        <div class="callout why">
+          <strong>Why use --prefix</strong>
+          Installing into <code>/opt/project-version</code> keeps manual builds isolated from apt. You can remove or switch versions without touching system packages.
+        </div>
+        <div class="card" data-level="advanced">
+          <h3>Advanced configure introspection</h3>
+          <pre><code>./configure --help | less
+
+CFLAGS='-O2 -pipe -fstack-protector-strong -D_FORTIFY_SOURCE=3' \
+LDFLAGS='-Wl,-z,relro,-z,now' \
+./configure --prefix=/opt/hello-2.12.1</code></pre>
+        </div>
+      </section>
+
+      <!-- CH 07 -->
+      <section class="section" id="example-cmake">
+        <div class="section-header">
+          <div class="section-num">07</div>
+          <div>
+            <div class="section-title">Example C: CMake Projects (Out-of-Source Build)</div>
+            <div class="section-subtitle">The modern C++ standard — keep source trees clean</div>
+          </div>
+        </div>
+        <pre><code>git clone https://github.com/fmtlib/fmt.git
+cd fmt
+
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/opt/fmt
+
+cmake --build build -j"$(nproc)"
+ctest --test-dir build --output-on-failure
+sudo cmake --install build</code></pre>
+        <h3>Why out-of-source</h3>
+        <ul>
+          <li>Keeps source tree clean.</li>
+          <li>Easy to wipe and rebuild: <code>rm -rf build</code>.</li>
+          <li>Supports multiple configs (Debug and Release) side by side.</li>
+        </ul>
+        <div class="card" data-level="advanced">
+          <h3>Advanced CMake: presets and compile commands</h3>
+          <pre><code>cmake -S . -B build-debug \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+cmake -S . -B build-rel \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON</code></pre>
+        </div>
+      </section>
+
+      <!-- CH 08 -->
+      <section class="section" id="example-meson">
+        <div class="section-header">
+          <div class="section-num">08</div>
+          <div>
+            <div class="section-title">Example D: Meson + Ninja</div>
+            <div class="section-subtitle">Fast, readable, increasingly popular in modern projects</div>
+          </div>
+        </div>
+        <pre><code>git clone https://github.com/frida/frida-core.git
+cd frida-core
+
+meson setup build --prefix=/opt/frida-core
+meson compile -C build
+meson test -C build
+sudo meson install -C build</code></pre>
+        <div class="callout warn">
+          <strong>Reality check</strong>
+          Large projects may require many <code>-dev</code> dependencies first. Read build output carefully and install the missing headers it reports.
+        </div>
+        <div class="card" data-level="advanced">
+          <h3>Advanced reproducibility tip</h3>
+          <pre><code>uname -a
+lsb_release -a
+gcc --version
+meson --version
+ninja --version</code></pre>
+        </div>
+      </section>
+
+      <!-- CH 09 -->
+      <section class="section" id="debug">
+        <div class="section-header">
+          <div class="section-num">09</div>
+          <div>
+            <div class="section-title">Debug and Troubleshoot Like an Engineer</div>
+            <div class="section-subtitle">Every error has a root cause — here is how to find it fast</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Symptom</th><th>Likely Cause</th><th>Fix Strategy</th></tr></thead>
+            <tbody>
+              <tr><td><code>command not found: gcc</code></td><td>Compiler toolchain missing</td><td><code>sudo apt install build-essential</code></td></tr>
+              <tr><td><code>fatal error: xyz.h: No such file</code></td><td>Missing development headers</td><td>Install matching <code>libxyz-dev</code> package</td></tr>
+              <tr><td><code>undefined reference to ...</code></td><td>Linker flags or library ordering issue</td><td>Check <code>pkg-config --cflags --libs package</code></td></tr>
+              <tr><td>Binary runs locally but not for others</td><td>Runtime path / shared library mismatch</td><td>Inspect with <code>ldd ./binary</code></td></tr>
+              <tr><td><code>Permission denied</code> during install</td><td>Writing to root-owned path</td><td>Use <code>sudo</code> only for install step</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre><code>which gcc
+gcc --version
+pkg-config --modversion openssl
+ldd ./your_binary</code></pre>
+        <div class="card" data-level="advanced">
+          <h3>Deep debugging toolkit</h3>
+          <pre><code>readelf -d ./your_binary
+objdump -p ./your_binary | grep NEEDED
+
+strace -f -o trace.log ./your_binary</code></pre>
+        </div>
+      </section>
+
+      <!-- CH 10 -->
+      <section class="section" id="safety">
+        <div class="section-header">
+          <div class="section-num">10</div>
+          <div>
+            <div class="section-title">Safe Install and Uninstall Strategy</div>
+            <div class="section-subtitle">Version-isolated installs with clean rollback</div>
+          </div>
+        </div>
+        <h3>Best practice layout</h3>
+        <pre><code>/opt/mytool-1.2.3/
+/opt/mytool-1.3.0/
+/usr/local/bin/mytool -> /opt/mytool-1.3.0/bin/mytool</code></pre>
+        <ul>
+          <li>Install each version into its own directory.</li>
+          <li>Switch active version with a symlink.</li>
+          <li>Rollback by repointing symlink to previous version.</li>
+        </ul>
+        <div class="callout why">
+          <strong>Why this wins</strong>
+          You avoid overwriting apt-owned files and keep rollback simple. This is exactly how stable environments are managed in real teams.
+        </div>
+        <h3>Uninstall notes</h3>
+        <ul>
+          <li>If supported, run <code>sudo make uninstall</code> from the same build tree.</li>
+          <li>If not supported, remove the version directory and update symlink.</li>
+          <li>For strict tracking, use <code>checkinstall</code> to create a removable package.</li>
+        </ul>
+      </section>
+
+      <!-- CH 11 -->
+      <section class="section" id="cheatsheet">
+        <div class="section-header">
+          <div class="section-num">11</div>
+          <div>
+            <div class="section-title">Ubuntu Compile Cheat Sheet</div>
+            <div class="section-subtitle">Every build system in one page</div>
+          </div>
+        </div>
+        <pre><code># baseline tooling
+sudo apt update
+sudo apt install -y build-essential pkg-config git curl
+
+# configure style (autotools)
+./configure --prefix=/opt/tool
+make -j"$(nproc)"
+make check
+sudo make install
+
+# cmake style
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/tool
+cmake --build build -j"$(nproc)"
+ctest --test-dir build --output-on-failure
+sudo cmake --install build
+
+# meson style
+meson setup build --prefix=/opt/tool
+meson compile -C build
+meson test -C build
+sudo meson install -C build</code></pre>
+      </section>
+
+      <!-- CH 12 -->
+      <section class="section" id="practice">
+        <div class="section-header">
+          <div class="section-num">12</div>
+          <div>
+            <div class="section-title">Practice Roadmap</div>
+            <div class="section-subtitle">Teach yourself fast with deliberate repetition</div>
+          </div>
+        </div>
+        <ol>
+          <li>Compile a single-file C program with warnings and optimisation flags.</li>
+          <li>Build one small autotools project and install under <code>/opt</code>.</li>
+          <li>Build one CMake project using out-of-source build and run tests.</li>
+          <li>Practice diagnosing one missing-header and one linker error.</li>
+          <li>Write your own personal build note template for every project.</li>
+        </ol>
+        <div class="callout ok">
+          <strong>Teaching method</strong>
+          For each project, write three things: what failed, why it failed, and the command that proved it was fixed. This turns raw commands into true engineering understanding.
+        </div>
+      </section>
+
+      <!-- CH 13 -->
+      <section class="section" id="labs">
+        <div class="section-header">
+          <div class="section-num">13</div>
+          <div>
+            <div class="section-title">Full Lab Exercises With Worked Examples</div>
+            <div class="section-subtitle">Complete these in order — if you can explain each one, you are podcast-ready</div>
+          </div>
+        </div>
+        <p class="lead">Each lab includes objective, commands, expected result, and a worked answer.</p>
+
+        <article class="lab">
+          <h3>Lab 1: First principles compile and warning hygiene</h3>
+          <div class="lab-meta">
+            <span class="badge">Beginner</span>
+            <span class="badge">20 min</span>
+            <span class="badge">gcc · make</span>
+          </div>
+          <p><strong>Objective:</strong> compile a tiny C app, trigger warnings, then clean them up.</p>
+          <pre><code>mkdir -p ~/src-labs/lab1 && cd ~/src-labs/lab1
+
+cat > hello.c &lt;&lt;'EOF'
+#include &lt;stdio.h&gt;
+
+int main() {
+  int unused = 7;
+  printf("hello compile lab\n");
+  return 0;
+}
+EOF
+
+gcc -Wall -Wextra -O2 hello.c -o hello
+./hello</code></pre>
+          <p><strong>Expected:</strong> build succeeds but warns about an unused variable.</p>
+          <div class="worked">
+            <strong>Worked solution</strong>
+            <p>Delete the unused variable, recompile, and prove a clean build:</p>
+            <pre><code>sed -i '/unused/d' hello.c
+gcc -Wall -Wextra -Werror -O2 hello.c -o hello
+./hello</code></pre>
+            <p>Why: <code>-Werror</code> upgrades warning discipline so quality regressions fail early.</p>
+          </div>
+        </article>
+
+        <article class="lab">
+          <h3>Lab 2: Autotools project with isolated install prefix</h3>
+          <div class="lab-meta">
+            <span class="badge">Beginner+</span>
+            <span class="badge">30 min</span>
+            <span class="badge">configure · make</span>
+          </div>
+          <p><strong>Objective:</strong> build GNU hello and install into a versioned path under <code>/opt</code>.</p>
+          <pre><code>mkdir -p ~/src-labs/lab2 && cd ~/src-labs/lab2
+curl -LO https://ftp.gnu.org/gnu/hello/hello-2.12.1.tar.gz
+tar -xzf hello-2.12.1.tar.gz
+cd hello-2.12.1
+
+./configure --prefix=/opt/hello-2.12.1
+make -j"$(nproc)"
+make check
+sudo make install
+/opt/hello-2.12.1/bin/hello</code></pre>
+          <p><strong>Expected:</strong> hello binary runs from <code>/opt/hello-2.12.1/bin/hello</code>.</p>
+          <div class="worked">
+            <strong>Worked solution</strong>
+            <p>Create a stable command path:</p>
+            <pre><code>sudo ln -sfn /opt/hello-2.12.1/bin/hello /usr/local/bin/hello-src
+hello-src</code></pre>
+            <p>Why: symlink switching gives clean rollback and avoids stomping apt-managed files.</p>
+          </div>
+        </article>
+
+        <article class="lab">
+          <h3>Lab 3: CMake debug vs release build matrix</h3>
+          <div class="lab-meta">
+            <span class="badge">Intermediate</span>
+            <span class="badge">35 min</span>
+            <span class="badge">cmake · ctest</span>
+          </div>
+          <p><strong>Objective:</strong> create separate debug and release builds and compare behaviour.</p>
+          <pre><code>mkdir -p ~/src-labs/lab3 && cd ~/src-labs/lab3
+git clone https://github.com/fmtlib/fmt.git
+cd fmt
+
+cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-debug -j"$(nproc)"
+ctest --test-dir build-debug --output-on-failure
+
+cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
+cmake --build build-release -j"$(nproc)"
+ctest --test-dir build-release --output-on-failure</code></pre>
+          <p><strong>Expected:</strong> both trees build cleanly; debug tree retains symbols and compile commands.</p>
+          <div class="worked">
+            <strong>Worked solution</strong>
+            <p>Inspect binary and debug symbols:</p>
+            <pre><code>file build-debug/libfmt.a
+file build-release/libfmt.a
+ls build-debug/compile_commands.json</code></pre>
+            <p>Why: multi-tree builds let you diagnose problems in debug mode without sacrificing release quality.</p>
+          </div>
+        </article>
+
+        <article class="lab" data-level="advanced">
+          <h3>Lab 4: Intentional failure and root-cause diagnosis</h3>
+          <div class="lab-meta">
+            <span class="badge">Advanced</span>
+            <span class="badge">40 min</span>
+            <span class="badge">pkg-config · ldd · strace</span>
+          </div>
+          <p><strong>Objective:</strong> break a build on purpose, then recover methodically.</p>
+          <pre><code>mkdir -p ~/src-labs/lab4 && cd ~/src-labs/lab4
+cat > openssl_demo.c &lt;&lt;'EOF'
+#include &lt;openssl/ssl.h&gt;
+int main(void) { SSL_library_init(); return 0; }
+EOF
+
+# Intentionally missing linker flags
+gcc openssl_demo.c -o openssl_demo</code></pre>
+          <p><strong>Expected:</strong> undefined reference/link errors.</p>
+          <div class="worked">
+            <strong>Worked solution</strong>
+            <pre><code>sudo apt install -y libssl-dev
+gcc openssl_demo.c -o openssl_demo $(pkg-config --cflags --libs openssl)
+ldd ./openssl_demo
+strace -f -o openssl_trace.log ./openssl_demo</code></pre>
+            <p>Why: you validated headers, linker flags, runtime resolution, and execution path in one disciplined chain.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- CH 14 -->
+      <section class="section" id="podcast">
+        <div class="section-header">
+          <div class="section-num">14</div>
+          <div>
+            <div class="section-title">Podcast Blueprint</div>
+            <div class="section-subtitle">Teach compiling from source like a pro — 20–30 minute episode outline</div>
+          </div>
+        </div>
+        <p class="lead">Use this exact outline to record a teaching episode. It turns your lab work into a story arc listeners can follow.</p>
+
+        <div class="outline-step">
+          <strong>Segment 1 — 2 min: Hook</strong>
+          <p>"Package managers are great, but source builds give you control over features, performance, and debugging depth. Today I will prove it with four Ubuntu labs."</p>
+        </div>
+        <div class="outline-step">
+          <strong>Segment 2 — 5 min: Build systems map</strong>
+          <p>Explain <code>gcc</code>, <code>configure + make</code>, <code>CMake</code>, and <code>Meson</code> as four common roads to the same goal: a verified binary.</p>
+        </div>
+        <div class="outline-step">
+          <strong>Segment 3 — 10 min: Walk through your labs</strong>
+          <p>For each lab, say: objective, one failure you hit, exact command that fixed it, and the verification command you used.</p>
+        </div>
+        <div class="outline-step">
+          <strong>Segment 4 — 5 min: Pro practices</strong>
+          <p>Teach versioned installs under <code>/opt</code>, symlink-based rollback, and why warning-free builds are a culture, not a compiler switch.</p>
+        </div>
+        <div class="outline-step">
+          <strong>Segment 5 — 2 min: Closing challenge</strong>
+          <p>Challenge listeners to reproduce one lab, then explain root cause and fix in 60 seconds. That exercise transforms command memorisation into engineering understanding.</p>
+        </div>
+
+        <div class="callout ok">
+          <strong>Confidence line</strong>
+          By the end of these labs, you can explain compiling from source clearly enough that even the strictest open-source mentors would nod in approval.
+        </div>
+      </section>
+
+      <!-- CH 15 -->
+      <section class="section" id="pipeline-map">
+        <div class="section-header">
+          <div class="section-num">15</div>
+          <div>
+            <div class="section-title">Visual Build Pipeline</div>
+            <div class="section-subtitle">The complete path your files travel from source to installed tool</div>
+          </div>
+        </div>
+        <p class="lead">Use this map when teaching so listeners understand not just commands, but the transformation of artifacts at each stage.</p>
+
+        <div class="pipeline">
+          <div class="pipe-card">
+            <h3>Step 1: Source</h3>
+            <p>Human-readable code and build instructions.</p>
+            <ul class="mini-list">
+              <li><code>hello.c</code> (Lab 1)</li>
+              <li><code>configure.ac</code> (Lab 2)</li>
+              <li><code>CMakeLists.txt</code> (Lab 3)</li>
+            </ul>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-card">
+            <h3>Step 2: Configure</h3>
+            <p>Environment detection and build plan generation.</p>
+            <ul class="mini-list">
+              <li><code>./configure --prefix=…</code></li>
+              <li><code>cmake -S . -B build</code></li>
+              <li>Result: generated Makefiles</li>
+            </ul>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-card">
+            <h3>Step 3: Compile + Link</h3>
+            <p>Compilers create objects; linker creates runnable outputs.</p>
+            <ul class="mini-list">
+              <li><code>hello.c</code> → <code>hello.o</code></li>
+              <li><code>hello.o</code> + libc → <code>hello</code></li>
+              <li><code>make</code> / <code>cmake --build</code></li>
+            </ul>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-card">
+            <h3>Step 4: Install + Verify</h3>
+            <p>Copy build outputs into stable runtime paths and validate.</p>
+            <ul class="mini-list">
+              <li><code>sudo make install</code></li>
+              <li><code>/opt/…/bin/hello</code></li>
+              <li><code>ldd ./binary</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout why">
+          <strong>Teaching script</strong>
+          Say it this way: "Source defines intent, configure makes a local plan, compile and link manufacture artifacts, install promotes outputs into stable operational paths."
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th>Command family</th><th>Input</th><th>Output</th><th>Proof command</th></tr></thead>
+            <tbody>
+              <tr><td>Configure</td><td><code>./configure</code>, <code>cmake -S -B</code>, <code>meson setup</code></td><td>Source + environment</td><td>Build system files</td><td><code>test -f Makefile</code></td></tr>
+              <tr><td>Build</td><td><code>make</code>, <code>cmake --build</code>, <code>meson compile</code></td><td>Build system files + source</td><td>Objects, libs, binaries</td><td><code>file ./binary</code></td></tr>
+              <tr><td>Test</td><td><code>make check</code>, <code>ctest</code>, <code>meson test</code></td><td>Built artifacts</td><td>Test reports</td><td>Exit code 0</td></tr>
+              <tr><td>Install</td><td><code>make install</code>, <code>cmake --install</code>, <code>meson install</code></td><td>Built artifacts</td><td>Runtime layout in prefix</td><td><code>&lt;prefix&gt;/bin/tool --version</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout ok">
+          <strong>Podcast-ready one-liner</strong>
+          "Compiling from source is not one command, it is a supply chain: plan, build, validate, and promote."
+        </div>
+      </section>
+
+      <footer class="footer">
+        <strong>code::core</strong> — Compile from Source on Ubuntu &middot; Field Manual Edition &middot; 2026
+      </footer>
+
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var body = document.body;
+      var buttons = document.querySelectorAll('.mode-btn');
+
+      function applyMode(mode) {
+        body.setAttribute('data-mode', mode);
+        buttons.forEach(function (btn) {
+          var active = btn.getAttribute('data-mode-target') === mode;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        try { localStorage.setItem('compileLearnMode', mode); } catch (e) {}
+      }
+
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () { applyMode(btn.getAttribute('data-mode-target')); });
+      });
+
+      var saved = localStorage.getItem('compileLearnMode');
+      applyMode(saved === 'advanced' ? 'advanced' : 'beginner');
+
+      // highlight active nav link on scroll
+      // copy-code buttons
+      document.querySelectorAll('pre').forEach(function (pre) {
+        var wrap = document.createElement('div');
+        wrap.className = 'pre-wrap';
+        pre.parentNode.insertBefore(wrap, pre);
+        wrap.appendChild(pre);
+        var btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copy';
+        btn.setAttribute('aria-label', 'Copy code');
+        btn.addEventListener('click', function () {
+          var text = pre.innerText;
+          navigator.clipboard.writeText(text).then(function () {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(function () {
+              btn.textContent = 'Copy';
+              btn.classList.remove('copied');
+            }, 1800);
+          }).catch(function () {
+            var sel = window.getSelection();
+            var range = document.createRange();
+            range.selectNodeContents(pre);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.execCommand('copy');
+            sel.removeAllRanges();
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(function () {
+              btn.textContent = 'Copy';
+              btn.classList.remove('copied');
+            }, 1800);
+          });
+        });
+        wrap.appendChild(btn);
+      });
+
+      var sections = document.querySelectorAll('.section[id]');
+      var navLinks = document.querySelectorAll('.nav-link');
+      if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              navLinks.forEach(function (link) {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+              });
+            }
+          });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+        sections.forEach(function (s) { observer.observe(s); });
+      }
+    }());
+  </script>
+</body>
+</html>
