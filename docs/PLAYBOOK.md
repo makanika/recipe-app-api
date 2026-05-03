@@ -344,3 +344,31 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: CI pipeline reliability
+
+## 2026-05-03 15:22 - Configured Checks and Wait for DB in Git
+
+- Commit: d55ecdf
+- Author: makanika
+- Date: 2026-05-03T15:22:39+03:00
+- Delta: +37 / -6
+- Chapter Tags: CI/CD, GitHub Actions, Backend API
+- Changed Files:
+  - M	.github/workflows/checks.yml
+  - M	app/app/settings.py
+  - M	docker-compose.yml
+  - M	docs/PLAYBOOK.md
+- Teaching Focus:
+  - CI discipline: every push should verify tests and linting before merge.
+  - Application evolution: Django code changes should be traced to behavior, tests, and API intent.
+  - Service orchestration: Compose defines the local runtime contract between code and infrastructure.
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+- Teaching Narrative:
+  - Story: This commit advances CI pipeline reliability through a moderate and visible delta and centers on 'Configured Checks and Wait for DB in Git'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: CI discipline: every push should verify tests and linting before merge.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
