@@ -232,3 +232,40 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: Django application behavior
+
+## 2026-05-03 12:13 - added_unit_testing_for_DB
+
+- Commit: 7c2d521
+- Author: makanika
+- Date: 2026-05-03T12:13:44+03:00
+- Delta: +3335 / -2
+- Chapter Tags: Django, Application Logic, Backend API
+- Changed Files:
+  - M	app/app/settings.py
+  - A	app/core/__init__.py
+  - A	app/core/admin.py
+  - A	app/core/apps.py
+  - A	app/core/management/__init__.py
+  - A	app/core/management/commands/__init__.py
+  - A	app/core/management/commands/wait_db.py
+  - A	app/core/migrations/__init__.py
+  - A	app/core/models.py
+  - A	app/core/tests/__init__.py
+  - A	app/core/tests/tests_commands.py
+  - M	docs/PLAYBOOK.md
+  - A	emiru.html
+  - A	mqtt-book.html
+- Teaching Focus:
+  - Application evolution: Django code changes should be traced to behavior, tests, and API intent.
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+  - Incremental delivery: each addition should map to a clear capability gain.
+- Teaching Narrative:
+  - Story: This commit advances Django application behavior through a large and foundational delta and centers on 'added_unit_testing_for_DB'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: Application evolution: Django code changes should be traced to behavior, tests, and API intent.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
