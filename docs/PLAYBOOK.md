@@ -147,3 +147,42 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: Container image design
+
+## 2026-05-03 10:21 - added_postgres
+
+- Commit: 6239b56
+- Author: makanika
+- Date: 2026-05-03T10:21:31+03:00
+- Delta: +3926 / -2
+- Chapter Tags: Dockerfile, Image Build, Container Security, Backend API
+- Changed Files:
+  - A	.githooks/post-commit
+  - M	.gitignore
+  - M	Dockerfile
+  - M	README.md
+  - A	app/app/calc.py
+  - A	app/app/tests.py
+  - A	compile-learn.html
+  - M	docker-compose.yml
+  - A	docs/PLAYBOOK.md
+  - A	index.html
+  - M	requirements.txt
+  - A	scripts/install-git-hooks.ps1
+  - A	scripts/update-playbook.ps1
+- Teaching Focus:
+  - Container image design: layer order controls build speed and reproducibility.
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+  - Application evolution: Django code changes should be traced to behavior, tests, and API intent.
+  - Service orchestration: Compose defines the local runtime contract between code and infrastructure.
+  - Dependency governance: version ranges communicate compatibility boundaries.
+  - Incremental delivery: each addition should map to a clear capability gain.
+- Teaching Narrative:
+  - Story: This commit advances Container image design through a large and foundational delta and centers on 'added_postgres'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: Container image design: layer order controls build speed and reproducibility.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
