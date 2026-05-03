@@ -269,3 +269,25 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: Developer education and documentation
+
+## 2026-05-03 12:14 - improved_pay_book
+
+- Commit: eb505eb
+- Author: makanika
+- Date: 2026-05-03T12:14:01+03:00
+- Delta: +37 / -0
+- Chapter Tags: Documentation, Teaching
+- Changed Files:
+  - M	docs/PLAYBOOK.md
+- Teaching Focus:
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+- Teaching Narrative:
+  - Story: This commit advances Developer education and documentation through a moderate and visible delta and centers on 'improved_pay_book'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: Documentation is architecture: clear explanations reduce onboarding and debugging time.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+
