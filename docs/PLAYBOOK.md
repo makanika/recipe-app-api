@@ -372,3 +372,28 @@ Each entry explains what changed and why it matters for Docker + Django engineer
 - Verification Prompt: Run the smallest command that proves this commit works as intended.
 
 
+### Track: CI pipeline reliability
+
+## 2026-05-03 15:29 - Added Start Database in Github Actions
+
+- Commit: 9d93834
+- Author: makanika
+- Date: 2026-05-03T15:29:42+03:00
+- Delta: +34 / -1
+- Chapter Tags: CI/CD, GitHub Actions
+- Changed Files:
+  - M	.github/workflows/checks.yml
+  - M	docs/PLAYBOOK.md
+- Teaching Focus:
+  - CI discipline: every push should verify tests and linting before merge.
+  - Documentation is architecture: clear explanations reduce onboarding and debugging time.
+  - Incremental delivery: each addition should map to a clear capability gain.
+- Teaching Narrative:
+  - Story: This commit advances CI pipeline reliability through a moderate and visible delta and centers on 'Added Start Database in Github Actions'.
+  - Why this matters: Production quality improves when teams turn each change into a reusable operating principle.
+  - Teach it this way: Start with the problem, show the exact file changes, then validate behavior with one concrete command.
+  - Anchor lesson: CI discipline: every push should verify tests and linting before merge.
+- Hands-on Prompt: Explain this commit to a junior engineer in 3 sentences, then pair it with one local verification command.
+- Verification Prompt: Run the smallest command that proves this commit works as intended.
+
+

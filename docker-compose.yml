@@ -1,13 +1,13 @@
 services:
   app:
-    build: 
+    build:
       context: .
       args:
         - Dev=true
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app  
+      - ./app:/app
     command: >
       sh -c "python manage.py wait_db &&
              python manage.py migrate &&
@@ -17,6 +17,9 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASSWORD=devpassword
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:13-alpine
@@ -26,6 +29,11 @@ services:
       POSTGRES_DB: devdb
       POSTGRES_USER: devuser
       POSTGRES_PASSWORD: devpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d devdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 
 volumes:
